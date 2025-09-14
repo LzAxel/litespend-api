@@ -21,7 +21,7 @@ func (u UserRole) String() string {
 }
 
 type User struct {
-	ID           uint64    `json:"id" db:"id"`
+	ID           int       `json:"id" db:"id"`
 	Username     string    `json:"username" db:"username"`
 	Role         UserRole  `json:"role" db:"role"`
 	PasswordHash string    `json:"-" db:"password_hash"`

@@ -10,25 +10,28 @@ CREATE TABLE users
 CREATE TABLE transaction_categories
 (
     id         BIGSERIAL PRIMARY KEY UNIQUE,
-    name       VARCHAR(255) NOT NULL,
-    type       SMALLINT     NOT NULL,
-    created_at TIMESTAMP    NOT NULL
+    user_id    BIGINT REFERENCES users (id) NOT NULL,
+    name       VARCHAR(255)                 NOT NULL,
+    type       SMALLINT                     NOT NULL,
+    created_at TIMESTAMP                    NOT NULL
 );
 
 CREATE TABLE goals
 (
     id            BIGSERIAL PRIMARY KEY UNIQUE,
-    name          VARCHAR(255)     NOT NULL,
-    target_amount DOUBLE PRECISION NOT NULL,
-    start_amount  DOUBLE PRECISION NOT NULL,
-    frequency     SMALLINT         NOT NULL,
-    deadline_date TIMESTAMP        NOT NULL,
-    created_at    TIMESTAMP        NOT NULL
+    user_id       BIGINT REFERENCES users (id) NOT NULL,
+    name          VARCHAR(255)                 NOT NULL,
+    target_amount DOUBLE PRECISION             NOT NULL,
+    start_amount  DOUBLE PRECISION             NOT NULL,
+    frequency     SMALLINT                     NOT NULL,
+    deadline_date TIMESTAMP                    NOT NULL,
+    created_at    TIMESTAMP                    NOT NULL
 );
 
 CREATE TABLE transactions
 (
     id          BIGSERIAL PRIMARY KEY UNIQUE,
+    user_id     BIGINT REFERENCES users (id)                  NOT NULL,
     category_id BIGINT REFERENCES transaction_categories (id) NOT NULL,
     goal_id     BIGINT REFERENCES goals (id),
     description VARCHAR(255)                                  NOT NULL,
