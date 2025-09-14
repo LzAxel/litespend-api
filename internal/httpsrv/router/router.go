@@ -1,13 +1,16 @@
 package router
 
-import "litespend-api/internal/service"
+import (
+	"litespend-api/internal/service"
+	"litespend-api/internal/session"
+)
 
 type Router struct {
 	User *UserRouter
 }
 
-func NewRouter(service *service.Service) *Router {
+func NewRouter(service *service.Service, sm *session.SessionManager) *Router {
 	return &Router{
-		User: NewUserRouter(service),
+		User: NewUserRouter(service, sm),
 	}
 }

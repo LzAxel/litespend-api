@@ -6,6 +6,7 @@ import (
 	"litespend-api/internal/pkg/hash"
 	"litespend-api/internal/repository"
 	"litespend-api/internal/session"
+	"log/slog"
 	"time"
 )
 
@@ -14,9 +15,10 @@ type UserService struct {
 	sessionManager *session.SessionManager
 }
 
-func NewUserService(repository repository.UserRepository) *UserService {
+func NewUserService(repository repository.UserRepository, sm *session.SessionManager) *UserService {
 	return &UserService{
-		repo: repository,
+		repo:           repository,
+		sessionManager: sm,
 	}
 }
 
@@ -35,6 +37,20 @@ func (s *UserService) Register(ctx context.Context, user model.RegisterRequest) 
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *UserService) Login(ctx context.Context, user model.LoginRequest) error {
+	foundUser, err := s.repo.GetByUsername(ctx, user.Username)
+	if err != nil {
+		return err
+	}
+
+	if err := hash.CheckPassword(foundUser.PasswordHash, user.Password); err != nil {
+		return err
+	}
+	slog.Info("token", s.sessionManager.GetManager().Token(ctx))
 
 	return nil
 }

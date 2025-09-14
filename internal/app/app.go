@@ -28,10 +28,8 @@ func NewApp(cfg config.Config) *App {
 	}
 
 	repo := repository.NewRepository(psql)
-	services := service.NewService(repo)
-
 	sessionManager := session.NewSessionManager(session.NewSessionInMemoryStore())
-
+	services := service.NewService(repo, sessionManager)
 	server := httpsrv.NewServer(cfg.Server, services, sessionManager)
 
 	app := App{

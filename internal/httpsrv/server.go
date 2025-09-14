@@ -24,7 +24,7 @@ func NewServer(config config.ServerConfig, services *service.Service, sessionMan
 		gin:            gin.Default(),
 		config:         config,
 		service:        services,
-		router:         router.NewRouter(services),
+		router:         router.NewRouter(services, sessionManager),
 		sessionManager: sessionManager,
 	}
 
@@ -45,6 +45,7 @@ func (s *Server) setup() {
 		auth := apiv1.Group("/user")
 		{
 			auth.POST("/register", s.router.User.Register)
+			auth.POST("/login", s.router.User.Login)
 		}
 	}
 }
