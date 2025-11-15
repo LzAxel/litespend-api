@@ -28,9 +28,9 @@ func (r TransactionRepositoryPostgres) Create(ctx context.Context, transaction m
 
 	err := databases.WithinTransaction(ctx, r.db, func(tx *sqlx.Tx) error {
 		err := tx.GetContext(ctx, &createdID,
-			`INSERT INTO transactions(user_id, category_id, goal_id, description, amount, type, date_time, created_at) 
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-			transaction.UserID, transaction.CategoryID, transaction.GoalID, transaction.Description,
+			`INSERT INTO transactions(user_id, category_id, goal_id, prescribed_expanse_id, description, amount, type, date_time, created_at) 
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+			transaction.UserID, transaction.CategoryID, transaction.GoalID, transaction.PrescribedExpanseID, transaction.Description,
 			transaction.Amount, transaction.Type, transaction.DateTime, transaction.CreatedAt)
 		if err != nil {
 			return err
@@ -54,6 +54,10 @@ func (r TransactionRepositoryPostgres) Update(ctx context.Context, id int, dto m
 
 	if dto.GoalID != nil {
 		query = query.Set("goal_id", *dto.GoalID)
+	}
+
+	if dto.PrescribedExpanseID != nil {
+		query = query.Set("prescribed_expanse_id", *dto.PrescribedExpanseID)
 	}
 
 	if dto.Description != nil {
@@ -120,14 +124,57 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 	var transactions []model.Transaction = make([]model.Transaction, 0)
 	var total int
 
-	err := r.db.GetContext(ctx, &total, `SELECT COUNT(*) FROM transactions WHERE user_id = $1`, userID)
+	// Построение WHERE условия
+	whereClause := "WHERE t.user_id = $1"
+	args := []interface{}{userID}
+	argIndex := 1
+
+	if params.Search != nil && *params.Search != "" {
+		argIndex++
+		whereClause += fmt.Sprintf(" AND t.description ILIKE $%d", argIndex)
+		args = append(args, "%"+*params.Search+"%")
+	}
+
+	// Подсчет общего количества
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM transactions t %s`, whereClause)
+	err := r.db.GetContext(ctx, &total, countQuery, args...)
 	if err != nil {
 		return transactions, 0, err
 	}
 
-	err = r.db.SelectContext(ctx, &transactions,
-		`SELECT * FROM transactions WHERE user_id = $1 ORDER BY date_time DESC LIMIT $2 OFFSET $3`,
-		userID, params.Limit, params.Offset())
+	// Построение ORDER BY
+	orderBy := "ORDER BY t.date_time DESC"
+	if params.SortBy != nil {
+		sortOrder := "DESC"
+		if params.SortOrder != nil && *params.SortOrder == model.SortOrderASC {
+			sortOrder = "ASC"
+		}
+
+		switch *params.SortBy {
+		case model.SortFieldDate:
+			orderBy = fmt.Sprintf("ORDER BY t.date_time %s", sortOrder)
+		case model.SortFieldDescription:
+			orderBy = fmt.Sprintf("ORDER BY t.description %s", sortOrder)
+		case model.SortFieldCategory:
+			orderBy = fmt.Sprintf("ORDER BY t.category_id %s", sortOrder)
+		}
+	}
+
+	// Выборка данных
+	argIndex++
+	limitArg := argIndex
+	argIndex++
+	offsetArg := argIndex
+	args = append(args, params.Limit, params.Offset())
+
+	query := fmt.Sprintf(`
+		SELECT t.* FROM transactions t 
+		%s 
+		%s 
+		LIMIT $%d OFFSET $%d
+	`, whereClause, orderBy, limitArg, offsetArg)
+
+	err = r.db.SelectContext(ctx, &transactions, query, args...)
 	if err != nil {
 		return transactions, 0, err
 	}

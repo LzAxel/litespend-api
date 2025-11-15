@@ -18,8 +18,8 @@ type PrescribedExpanse struct {
 
 type CreatePrescribedExpanseRequest struct {
 	CategoryID  uint64          `json:"category_id" binding:"required"`
-	Description string          `json:"description" binding:"required"`
-	Frequency   FrequencyType   `json:"frequency" binding:"required"`
+	Description string          `json:"description"`
+	Frequency   FrequencyType   `json:"frequency"`
 	Amount      decimal.Decimal `json:"amount" binding:"required"`
 	DateTime    time.Time       `json:"date_time" binding:"required"`
 }
@@ -40,4 +40,11 @@ type CreatePrescribedExpanseRecord struct {
 	Amount      decimal.Decimal
 	DateTime    time.Time
 	CreatedAt   time.Time
+}
+
+type PrescribedExpanseWithPaymentStatus struct {
+	PrescribedExpanse
+	IsPaid        bool            `json:"is_paid"`
+	PaidAmount    decimal.Decimal `json:"paid_amount"`
+	TransactionID *uint64         `json:"transaction_id,omitempty"`
 }

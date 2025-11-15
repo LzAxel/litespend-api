@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PrescribedExpansesRouteImport } from './routes/prescribed-expanses'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ImportRouteImport } from './routes/import'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -31,9 +33,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrescribedExpansesRoute = PrescribedExpansesRouteImport.update({
+  id: '/prescribed-expanses',
+  path: '/prescribed-expanses',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportRoute = ImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriesRoute = CategoriesRouteImport.update({
@@ -50,7 +62,9 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
+  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -58,7 +72,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
+  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -67,7 +83,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
+  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -77,7 +95,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/categories'
+    | '/import'
     | '/login'
+    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -85,7 +105,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/categories'
+    | '/import'
     | '/login'
+    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -93,7 +115,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/categories'
+    | '/import'
     | '/login'
+    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -102,7 +126,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CategoriesRoute: typeof CategoriesRoute
+  ImportRoute: typeof ImportRoute
   LoginRoute: typeof LoginRoute
+  PrescribedExpansesRoute: typeof PrescribedExpansesRoute
   RegisterRoute: typeof RegisterRoute
   StatisticsRoute: typeof StatisticsRoute
   TransactionsRoute: typeof TransactionsRoute
@@ -131,11 +157,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prescribed-expanses': {
+      id: '/prescribed-expanses'
+      path: '/prescribed-expanses'
+      fullPath: '/prescribed-expanses'
+      preLoaderRoute: typeof PrescribedExpansesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/import': {
+      id: '/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof ImportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categories': {
@@ -158,7 +198,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriesRoute: CategoriesRoute,
+  ImportRoute: ImportRoute,
   LoginRoute: LoginRoute,
+  PrescribedExpansesRoute: PrescribedExpansesRoute,
   RegisterRoute: RegisterRoute,
   StatisticsRoute: StatisticsRoute,
   TransactionsRoute: TransactionsRoute,

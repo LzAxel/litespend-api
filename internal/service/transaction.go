@@ -25,14 +25,15 @@ func NewTransactionService(repository repository.TransactionRepository) *Transac
 
 func (s *TransactionService) Create(ctx context.Context, logined model.User, req model.CreateTransactionRequest) (int, error) {
 	transaction := model.Transaction{
-		UserID:      logined.ID,
-		CategoryID:  req.CategoryID,
-		GoalID:      req.GoalID,
-		Description: req.Description,
-		Amount:      req.Amount,
-		Type:        req.Type,
-		DateTime:    req.DateTime,
-		CreatedAt:   time.Now(),
+		UserID:              logined.ID,
+		CategoryID:          req.CategoryID,
+		GoalID:              req.GoalID,
+		PrescribedExpanseID: req.PrescribedExpanseID,
+		Description:         req.Description,
+		Amount:              req.Amount,
+		Type:                req.Type,
+		DateTime:            req.DateTime,
+		CreatedAt:           time.Now(),
 	}
 
 	id, err := s.repo.Create(ctx, transaction)

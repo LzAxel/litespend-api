@@ -89,9 +89,19 @@ func (s *Server) setup() {
 		{
 			prescribedExpanses.POST("", s.router.PrescribedExpanse.CreatePrescribedExpanse)
 			prescribedExpanses.GET("", s.router.PrescribedExpanse.GetPrescribedExpanses)
+			prescribedExpanses.GET("/with-payment-status", s.router.PrescribedExpanse.GetPrescribedExpansesWithPaymentStatus)
+			prescribedExpanses.POST("/:id/mark-as-paid", s.router.PrescribedExpanse.MarkAsPaid)
+			prescribedExpanses.POST("/:id/mark-as-paid-partial", s.router.PrescribedExpanse.MarkAsPaidPartial)
 			prescribedExpanses.GET("/:id", s.router.PrescribedExpanse.GetPrescribedExpanse)
 			prescribedExpanses.PUT("/:id", s.router.PrescribedExpanse.UpdatePrescribedExpanse)
 			prescribedExpanses.DELETE("/:id", s.router.PrescribedExpanse.DeletePrescribedExpanse)
+		}
+
+		imports := apiv1.Group("/import")
+		imports.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		{
+			imports.POST("/parse", s.router.Import.ParseExcelFile)
+			imports.POST("/data", s.router.Import.ImportData)
 		}
 
 		admin := apiv1.Group("/admin")

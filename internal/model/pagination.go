@@ -1,8 +1,26 @@
 package model
 
+type SortOrder string
+
+const (
+	SortOrderASC  SortOrder = "asc"
+	SortOrderDESC SortOrder = "desc"
+)
+
+type SortField string
+
+const (
+	SortFieldDate        SortField = "date"
+	SortFieldDescription SortField = "description"
+	SortFieldCategory    SortField = "category"
+)
+
 type PaginationParams struct {
-	Page  int
-	Limit int
+	Page      int
+	Limit     int
+	SortBy    *SortField
+	SortOrder *SortOrder
+	Search    *string
 }
 
 func NewPaginationParams(page, limit int) PaginationParams {

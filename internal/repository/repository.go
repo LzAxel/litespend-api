@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/jmoiron/sqlx"
+	"github.com/shopspring/decimal"
 	"litespend-api/internal/model"
 	"time"
 )
@@ -42,6 +43,8 @@ type PrescribedExpanseRepository interface {
 	Delete(ctx context.Context, id int) error
 	GetByID(ctx context.Context, id int) (model.PrescribedExpanse, error)
 	GetList(ctx context.Context, userID int) ([]model.PrescribedExpanse, error)
+	IsPaidInPeriod(ctx context.Context, prescribedExpanseID int, periodStart, periodEnd time.Time) (bool, error)
+	GetPaidAmountInPeriod(ctx context.Context, prescribedExpanseID int, periodStart, periodEnd time.Time) (decimal.Decimal, *uint64, error)
 }
 
 type Repository struct {

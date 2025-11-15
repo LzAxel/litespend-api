@@ -135,9 +135,17 @@ export const authApi = {
   logout: () => api.post('/user/logout'),
 };
 
+export type SortField = 'date' | 'description' | 'category';
+export type SortOrder = 'asc' | 'desc';
+
 export const transactionsApi = {
-  getAll: (page = 1, limit = 10) =>
-    api.get<PaginatedResponse<Transaction>>('/transactions', { params: { page, limit } }),
+  getAll: (page = 1, limit = 10, sortBy?: SortField, sortOrder?: SortOrder, search?: string) => {
+    const params: Record<string, string> = { page: String(page), limit: String(limit) };
+    if (sortBy) params.sort_by = sortBy;
+    if (sortOrder) params.sort_order = sortOrder;
+    if (search) params.search = search;
+    return api.get<PaginatedResponse<Transaction>>('/transactions', { params });
+  },
   getById: (id: number) => api.get<Transaction>(`/transactions/${id}`),
   create: (data: CreateTransactionRequest) => api.post<{ id: number }>('/transactions', data),
   update: (id: number, data: UpdateTransactionRequest) =>
@@ -162,5 +170,107 @@ export const categoriesApi = {
   delete: (id: number) => api.delete(`/categories/${id}`),
   getByType: (type: TransactionType) =>
     api.get<Category[]>(`/categories?type=${type}`),
+};
+
+export type FrequencyType = 0 | 1 | 2 | 3;
+
+export interface PrescribedExpanse {
+  id: number;
+  user_id: number;
+  category_id: number;
+  description: string;
+  frequency: FrequencyType;
+  amount: string;
+  date_time: string;
+  created_at: string;
+}
+
+export interface PrescribedExpanseWithPaymentStatus extends PrescribedExpanse {
+  is_paid: boolean;
+  paid_amount: string;
+  transaction_id?: number;
+}
+
+export interface CreatePrescribedExpanseRequest {
+  category_id: number;
+  description: string;
+  frequency: FrequencyType;
+  amount: string;
+  date_time: string;
+}
+
+export interface UpdatePrescribedExpanseRequest {
+  category_id?: number;
+  description?: string;
+  frequency?: FrequencyType;
+  amount?: string;
+  date_time?: string;
+}
+
+export const prescribedExpansesApi = {
+  getAll: () => api.get<PrescribedExpanse[]>('/prescribed-expanses'),
+  getAllWithPaymentStatus: () =>
+    api.get<PrescribedExpanseWithPaymentStatus[]>('/prescribed-expanses/with-payment-status'),
+  getById: (id: number) => api.get<PrescribedExpanse>(`/prescribed-expanses/${id}`),
+  create: (data: CreatePrescribedExpanseRequest) =>
+    api.post<{ id: number }>('/prescribed-expanses', data),
+  update: (id: number, data: UpdatePrescribedExpanseRequest) =>
+    api.put(`/prescribed-expanses/${id}`, data),
+  delete: (id: number) => api.delete(`/prescribed-expanses/${id}`),
+  markAsPaid: (id: number) =>
+    api.post<{ transaction_id: number; message: string }>(`/prescribed-expanses/${id}/mark-as-paid`),
+  markAsPaidPartial: (id: number, amount: string) =>
+    api.post<{ transaction_id: number; message: string }>(`/prescribed-expanses/${id}/mark-as-paid-partial`, {
+      amount,
+    }),
+};
+
+export interface ExcelColumnMapping {
+  transaction_description?: string;
+  transaction_amount?: string;
+  transaction_type?: string;
+  transaction_date?: string;
+  transaction_category?: string;
+  category_name?: string;
+  category_type?: string;
+  prescribed_expanse_description?: string;
+  prescribed_expanse_amount?: string;
+  prescribed_expanse_frequency?: string;
+  prescribed_expanse_date?: string;
+  prescribed_expanse_category?: string;
+}
+
+export interface ExcelFileStructure {
+  columns: string[];
+  rows: number;
+}
+
+export interface ImportResult {
+  transactions_created: number;
+  categories_created: number;
+  prescribed_expanses_created: number;
+  errors?: string[];
+}
+
+export const importApi = {
+  parseFile: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<ExcelFileStructure>('/import/parse', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  importData: (file: File, mapping: ExcelColumnMapping) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mapping', JSON.stringify(mapping));
+    return api.post<ImportResult>('/import/data', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 

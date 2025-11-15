@@ -1,45 +1,47 @@
-import { useState } from 'react';
-import { transactionsApi, type Transaction, type Category } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { prescribedExpansesApi, categoriesApi, type PrescribedExpanse, type Category, type FrequencyType } from '@/lib/api';
 
-interface TransactionFormProps {
-  transaction?: Transaction | null;
-  categories: Category[];
+interface PrescribedExpanseFormProps {
+  prescribedExpanse?: PrescribedExpanse | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function TransactionForm({
-  transaction,
-  categories,
-  onClose,
-  onSuccess,
-}: TransactionFormProps) {
+const frequencyLabels: Record<FrequencyType, string> = {
+  0: 'Ежемесячно',
+  1: 'Ежедневно',
+  2: 'Еженедельно',
+  3: 'Ежеквартально',
+};
+
+export function PrescribedExpanseForm({ prescribedExpanse, onClose, onSuccess }: PrescribedExpanseFormProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
-    category_id: transaction?.category_id || 0,
-    description: transaction?.description || '',
-    amount: transaction?.amount || '',
-    type: (transaction?.type ?? 0) as 0 | 1,
-    date_time: transaction?.date_time
-      ? new Date(transaction.date_time).toISOString().slice(0, 16)
+    category_id: prescribedExpanse?.category_id || 0,
+    description: prescribedExpanse?.description || '',
+    frequency: (prescribedExpanse?.frequency ?? 0) as FrequencyType,
+    amount: prescribedExpanse?.amount || '',
+    date_time: prescribedExpanse
+      ? new Date(prescribedExpanse.date_time).toISOString().slice(0, 16)
       : new Date().toISOString().slice(0, 16),
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Фильтруем категории по типу транзакции
-  const filteredCategories = categories.filter((cat) => cat.type === formData.type);
-  
-  // Обновляем category_id при изменении типа, если текущая категория не подходит
-  const handleTypeChange = (newType: 0 | 1) => {
-    const newFilteredCategories = categories.filter((cat) => cat.type === newType);
-    let newCategoryId = formData.category_id;
-    
-    // Если текущая категория не подходит под новый тип, выбираем первую подходящую
-    if (!newFilteredCategories.find((cat) => cat.id === formData.category_id)) {
-      newCategoryId = newFilteredCategories[0]?.id || 0;
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoriesApi.getByType(1); // Только категории расходов
+      setCategories(response.data);
+      if (response.data.length > 0 && !formData.category_id) {
+        setFormData((prev) => ({ ...prev, category_id: response.data[0].id }));
+      }
+    } catch (err) {
+      console.error('Error loading categories:', err);
     }
-    
-    setFormData({ ...formData, type: newType, category_id: newCategoryId });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,15 +50,14 @@ export function TransactionForm({
     setLoading(true);
 
     try {
-      const submitData = {
+      const data = {
         ...formData,
         date_time: new Date(formData.date_time).toISOString(),
       };
-
-      if (transaction) {
-        await transactionsApi.update(transaction.id, submitData);
+      if (prescribedExpanse) {
+        await prescribedExpansesApi.update(prescribedExpanse.id, data);
       } else {
-        await transactionsApi.create(submitData);
+        await prescribedExpansesApi.create(data);
       }
       onSuccess();
     } catch (err: any) {
@@ -71,7 +72,7 @@ export function TransactionForm({
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {transaction ? 'Редактировать транзакцию' : 'Добавить транзакцию'}
+            {prescribedExpanse ? 'Редактировать обязательную трату' : 'Добавить обязательную трату'}
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             ✕
@@ -84,46 +85,19 @@ export function TransactionForm({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Тип транзакции
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => handleTypeChange(Number(e.target.value) as 0 | 1)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value={0}>Доход</option>
-              <option value={1}>Расход</option>
-            </select>
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Категория</label>
             <select
               value={formData.category_id}
-              onChange={(e) =>
-                setFormData({ ...formData, category_id: Number(e.target.value) })
-              }
+              onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               required
-              disabled={filteredCategories.length === 0}
             >
-              {filteredCategories.length === 0 ? (
-                <option value={0}>Нет доступных категорий</option>
-              ) : (
-                filteredCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))
-              )}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
-            {filteredCategories.length === 0 && (
-              <p className="mt-1 text-sm text-yellow-600">
-                Создайте категорию для {formData.type === 0 ? 'доходов' : 'расходов'}
-              </p>
-            )}
           </div>
 
           <div>
@@ -137,10 +111,27 @@ export function TransactionForm({
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Регулярность</label>
+            <select
+              value={formData.frequency}
+              onChange={(e) => setFormData({ ...formData, frequency: Number(e.target.value) as FrequencyType })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              {Object.entries(frequencyLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
             <input
               type="number"
               step="0.01"
+              min="0"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -149,7 +140,7 @@ export function TransactionForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата и время</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Дата начала</label>
             <input
               type="datetime-local"
               value={formData.date_time}

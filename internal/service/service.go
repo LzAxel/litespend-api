@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/shopspring/decimal"
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
 	"litespend-api/internal/session"
@@ -14,6 +15,7 @@ type Service struct {
 	Category
 	PrescribedExpanse
 	Auth
+	Import
 }
 
 type User interface {
@@ -49,6 +51,9 @@ type PrescribedExpanse interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.PrescribedExpanse, error)
 	GetList(ctx context.Context, logined model.User) ([]model.PrescribedExpanse, error)
+	GetListWithPaymentStatus(ctx context.Context, logined model.User) ([]model.PrescribedExpanseWithPaymentStatus, error)
+	MarkAsPaid(ctx context.Context, logined model.User, id int) (int, error)
+	MarkAsPaidPartial(ctx context.Context, logined model.User, id int, amount decimal.Decimal) (int, error)
 }
 
 type Auth interface {
@@ -56,12 +61,18 @@ type Auth interface {
 	GetSessionInfo(ctx context.Context, logined model.User, token string) (model.SessionInfo, error)
 }
 
+type Import interface {
+	ParseExcelFile(fileData []byte) (model.ExcelFileStructure, error)
+	ImportData(ctx context.Context, logined model.User, fileData []byte, mapping model.ExcelColumnMapping) (model.ImportResult, error)
+}
+
 func NewService(repository *repository.Repository, sessionManager *session.SessionManager) *Service {
 	return &Service{
 		User:              NewUserService(repository.UserRepository),
 		Transaction:       NewTransactionService(repository.TransactionRepository),
 		Category:          NewCategoryService(repository.CategoryRepository),
-		PrescribedExpanse: NewPrescribedExpanseService(repository.PrescribedExpanseRepository),
+		PrescribedExpanse: NewPrescribedExpanseService(repository.PrescribedExpanseRepository, repository.TransactionRepository),
 		Auth:              NewAuthService(sessionManager, repository.UserRepository),
+		Import:            NewImportService(repository.TransactionRepository, repository.CategoryRepository, repository.PrescribedExpanseRepository),
 	}
 }

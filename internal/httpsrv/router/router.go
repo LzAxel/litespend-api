@@ -11,6 +11,7 @@ type Router struct {
 	Category          *CategoryRouter
 	PrescribedExpanse *PrescribedExpanseRouter
 	Auth              *AuthRouter
+	Import            *ImportRouter
 }
 
 func NewRouter(service *service.Service, sessionManager *session.SessionManager) *Router {
@@ -20,5 +21,6 @@ func NewRouter(service *service.Service, sessionManager *session.SessionManager)
 		Category:          NewCategoryRouter(service),
 		PrescribedExpanse: NewPrescribedExpanseRouter(service),
 		Auth:              NewAuthRouter(service),
+		Import:            NewImportRouter(service),
 	}
 }

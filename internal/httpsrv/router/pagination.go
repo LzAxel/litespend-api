@@ -13,5 +13,27 @@ func ParsePaginationFromContext(c *gin.Context) model.PaginationParams {
 	page, _ := strconv.Atoi(pageStr)
 	limit, _ := strconv.Atoi(limitStr)
 
-	return model.NewPaginationParams(page, limit)
+	params := model.NewPaginationParams(page, limit)
+
+	// Сортировка
+	if sortByStr := c.Query("sort_by"); sortByStr != "" {
+		sortBy := model.SortField(sortByStr)
+		if sortBy == model.SortFieldDate || sortBy == model.SortFieldDescription || sortBy == model.SortFieldCategory {
+			params.SortBy = &sortBy
+		}
+	}
+
+	if sortOrderStr := c.Query("sort_order"); sortOrderStr != "" {
+		sortOrder := model.SortOrder(sortOrderStr)
+		if sortOrder == model.SortOrderASC || sortOrder == model.SortOrderDESC {
+			params.SortOrder = &sortOrder
+		}
+	}
+
+	// Поиск
+	if searchStr := c.Query("search"); searchStr != "" {
+		params.Search = &searchStr
+	}
+
+	return params
 }

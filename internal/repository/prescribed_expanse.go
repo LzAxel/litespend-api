@@ -4,8 +4,10 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/shopspring/decimal"
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository/databases"
+	"time"
 )
 
 type PrescribedExpanseRepositoryPostgres struct {
@@ -107,4 +109,71 @@ func (r PrescribedExpanseRepositoryPostgres) GetList(ctx context.Context, userID
 	}
 
 	return prescribedExpanses, nil
+}
+
+func (r PrescribedExpanseRepositoryPostgres) IsPaidInPeriod(ctx context.Context, prescribedExpanseID int, periodStart, periodEnd time.Time) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count,
+		`SELECT COUNT(*) FROM transactions 
+		 WHERE prescribed_expanse_id = $1 
+		 AND date_time >= $2 
+		 AND date_time < $3`,
+		prescribedExpanseID, periodStart, periodEnd)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r PrescribedExpanseRepositoryPostgres) GetPaidAmountInPeriod(ctx context.Context, prescribedExpanseID int, periodStart, periodEnd time.Time) (decimal.Decimal, *uint64, error) {
+	// Сначала проверяем, есть ли транзакции
+	var count int
+	err := r.db.GetContext(ctx, &count,
+		`SELECT COUNT(*) FROM transactions 
+		 WHERE prescribed_expanse_id = $1 
+		 AND date_time >= $2 
+		 AND date_time < $3`,
+		prescribedExpanseID, periodStart, periodEnd)
+	if err != nil {
+		return decimal.Zero, nil, err
+	}
+
+	if count == 0 {
+		return decimal.Zero, nil, nil
+	}
+
+	// Если есть транзакции, получаем сумму всех транзакций и ID последней
+	var totalAmount float64
+	var lastTransactionID uint64
+
+	// Получаем сумму всех транзакций
+	err = r.db.GetContext(ctx, &totalAmount,
+		`SELECT COALESCE(SUM(amount), 0)::float 
+		 FROM transactions 
+		 WHERE prescribed_expanse_id = $1 
+		 AND date_time >= $2 
+		 AND date_time < $3`,
+		prescribedExpanseID, periodStart, periodEnd)
+	if err != nil {
+		return decimal.Zero, nil, err
+	}
+
+	// Получаем ID последней транзакции
+	err = r.db.GetContext(ctx, &lastTransactionID,
+		`SELECT id 
+		 FROM transactions 
+		 WHERE prescribed_expanse_id = $1 
+		 AND date_time >= $2 
+		 AND date_time < $3 
+		 ORDER BY id DESC 
+		 LIMIT 1`,
+		prescribedExpanseID, periodStart, periodEnd)
+
+	amount := decimal.NewFromFloat(totalAmount)
+	var transactionID *uint64
+	if err == nil && lastTransactionID > 0 {
+		transactionID = &lastTransactionID
+	}
+
+	return amount, transactionID, nil
 }
