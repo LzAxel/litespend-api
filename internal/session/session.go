@@ -143,3 +143,12 @@ func (s *SessionManager) GetString(ctx *gin.Context, key string) string {
 	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, tok, exp)
 	return val
 }
+
+func (s *SessionManager) DeleteByToken(token string) error {
+	return s.manager.Store.Delete(token)
+}
+
+func (s *SessionManager) SessionExists(token string) (bool, error) {
+	_, found, err := s.manager.Store.Find(token)
+	return found, err
+}

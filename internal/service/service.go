@@ -2,20 +2,62 @@ package service
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
+	"litespend-api/internal/session"
 )
 
 type Service struct {
 	User
+	Transaction
+	Category
+	PrescribedExpanse
+	Auth
 }
 
 type User interface {
 	Register(ctx context.Context, user model.RegisterRequest) error
+	Login(ctx context.Context, c *gin.Context, req model.LoginRequest) (model.User, error)
+	Logout(ctx context.Context, c *gin.Context) error
 }
 
-func NewService(repository *repository.Repository) *Service {
+type Transaction interface {
+	Create(ctx context.Context, logined model.User, transaction model.CreateTransactionRequest) (int, error)
+	Update(ctx context.Context, logined model.User, id int, dto model.UpdateTransactionRequest) error
+	Delete(ctx context.Context, logined model.User, id int) error
+	GetByID(ctx context.Context, logined model.User, id int) (model.Transaction, error)
+	GetList(ctx context.Context, logined model.User) ([]model.Transaction, error)
+}
+
+type Category interface {
+	Create(ctx context.Context, logined model.User, req model.CreateCategoryRequest) (int, error)
+	Update(ctx context.Context, logined model.User, id int, dto model.UpdateCategoryRequest) error
+	Delete(ctx context.Context, logined model.User, id int) error
+	GetByID(ctx context.Context, logined model.User, id int) (model.TransactionCategory, error)
+	GetList(ctx context.Context, logined model.User) ([]model.TransactionCategory, error)
+	GetListByType(ctx context.Context, logined model.User, categoryType model.TransactionType) ([]model.TransactionCategory, error)
+}
+
+type PrescribedExpanse interface {
+	Create(ctx context.Context, logined model.User, req model.CreatePrescribedExpanseRequest) (int, error)
+	Update(ctx context.Context, logined model.User, id int, dto model.UpdatePrescribedExpanseRequest) error
+	Delete(ctx context.Context, logined model.User, id int) error
+	GetByID(ctx context.Context, logined model.User, id int) (model.PrescribedExpanse, error)
+	GetList(ctx context.Context, logined model.User) ([]model.PrescribedExpanse, error)
+}
+
+type Auth interface {
+	RevokeSession(ctx context.Context, logined model.User, token string) error
+	GetSessionInfo(ctx context.Context, logined model.User, token string) (model.SessionInfo, error)
+}
+
+func NewService(repository *repository.Repository, sessionManager *session.SessionManager) *Service {
 	return &Service{
-		User: NewUserService(repository.UserRepository),
+		User:              NewUserService(repository.UserRepository, sessionManager),
+		Transaction:       NewTransactionService(repository.TransactionRepository),
+		Category:          NewCategoryService(repository.CategoryRepository),
+		PrescribedExpanse: NewPrescribedExpanseService(repository.PrescribedExpanseRepository),
+		Auth:              NewAuthService(sessionManager, repository.UserRepository),
 	}
 }

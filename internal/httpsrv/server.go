@@ -4,7 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	sloggin "github.com/samber/slog-gin"
 	"litespend-api/internal/config"
+	"litespend-api/internal/httpsrv/middleware"
 	"litespend-api/internal/httpsrv/router"
+	"litespend-api/internal/repository"
 	"litespend-api/internal/service"
 	"litespend-api/internal/session"
 	"log/slog"
@@ -17,15 +19,17 @@ type Server struct {
 	service        *service.Service
 	router         *router.Router
 	sessionManager *session.SessionManager
+	repository     *repository.Repository
 }
 
-func NewServer(config config.ServerConfig, services *service.Service, sessionManager *session.SessionManager) *Server {
+func NewServer(config config.ServerConfig, services *service.Service, sessionManager *session.SessionManager, repo *repository.Repository) *Server {
 	server := &Server{
 		gin:            gin.Default(),
 		config:         config,
 		service:        services,
 		router:         router.NewRouter(services),
 		sessionManager: sessionManager,
+		repository:     repo,
 	}
 
 	server.setup()
@@ -45,6 +49,46 @@ func (s *Server) setup() {
 		auth := apiv1.Group("/user")
 		{
 			auth.POST("/register", s.router.User.Register)
+			auth.POST("/login", s.router.User.Login)
+			auth.POST("/logout", s.router.User.Logout)
+		}
+
+		transactions := apiv1.Group("/transactions")
+		transactions.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		{
+			transactions.POST("", s.router.Transaction.CreateTransaction)
+			transactions.GET("", s.router.Transaction.GetTransactions)
+			transactions.GET("/:id", s.router.Transaction.GetTransaction)
+			transactions.PUT("/:id", s.router.Transaction.UpdateTransaction)
+			transactions.DELETE("/:id", s.router.Transaction.DeleteTransaction)
+		}
+
+		categories := apiv1.Group("/categories")
+		categories.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		{
+			categories.POST("", s.router.Category.CreateCategory)
+			categories.GET("", s.router.Category.GetCategories)
+			categories.GET("/:id", s.router.Category.GetCategory)
+			categories.PUT("/:id", s.router.Category.UpdateCategory)
+			categories.DELETE("/:id", s.router.Category.DeleteCategory)
+		}
+
+		prescribedExpanses := apiv1.Group("/prescribed-expanses")
+		prescribedExpanses.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		{
+			prescribedExpanses.POST("", s.router.PrescribedExpanse.CreatePrescribedExpanse)
+			prescribedExpanses.GET("", s.router.PrescribedExpanse.GetPrescribedExpanses)
+			prescribedExpanses.GET("/:id", s.router.PrescribedExpanse.GetPrescribedExpanse)
+			prescribedExpanses.PUT("/:id", s.router.PrescribedExpanse.UpdatePrescribedExpanse)
+			prescribedExpanses.DELETE("/:id", s.router.PrescribedExpanse.DeletePrescribedExpanse)
+		}
+
+		admin := apiv1.Group("/admin")
+		admin.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		admin.Use(middleware.RequireAdmin())
+		{
+			admin.POST("/sessions/revoke", s.router.Auth.RevokeSession)
+			admin.GET("/sessions/info", s.router.Auth.GetSessionInfo)
 		}
 	}
 }

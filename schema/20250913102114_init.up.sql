@@ -10,6 +10,7 @@ CREATE TABLE users
 CREATE TABLE transaction_categories
 (
     id         BIGSERIAL PRIMARY KEY UNIQUE,
+    user_id    BIGINT REFERENCES users (id) NOT NULL,
     name       VARCHAR(255) NOT NULL,
     type       SMALLINT     NOT NULL,
     created_at TIMESTAMP    NOT NULL
@@ -29,11 +30,24 @@ CREATE TABLE goals
 CREATE TABLE transactions
 (
     id          BIGSERIAL PRIMARY KEY UNIQUE,
+    user_id     BIGINT REFERENCES users (id)                  NOT NULL,
     category_id BIGINT REFERENCES transaction_categories (id) NOT NULL,
     goal_id     BIGINT REFERENCES goals (id),
     description VARCHAR(255)                                  NOT NULL,
     amount      DOUBLE PRECISION                              NOT NULL,
     type        SMALLINT                                      NOT NULL,
+    date_time   TIMESTAMP                                     NOT NULL,
+    created_at  TIMESTAMP                                     NOT NULL
+);
+
+CREATE TABLE prescribed_expanses
+(
+    id          BIGSERIAL PRIMARY KEY UNIQUE,
+    user_id     BIGINT REFERENCES users (id)                  NOT NULL,
+    category_id BIGINT REFERENCES transaction_categories (id) NOT NULL,
+    description VARCHAR(255)                                  NOT NULL,
+    frequency   SMALLINT                                      NOT NULL,
+    amount      DOUBLE PRECISION                              NOT NULL,
     date_time   TIMESTAMP                                     NOT NULL,
     created_at  TIMESTAMP                                     NOT NULL
 );
