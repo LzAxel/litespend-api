@@ -58,6 +58,9 @@ func (s *Server) setup() {
 		{
 			transactions.POST("", s.router.Transaction.CreateTransaction)
 			transactions.GET("", s.router.Transaction.GetTransactions)
+			transactions.GET("/statistics/balance", s.router.Transaction.GetBalanceStatistics)
+			transactions.GET("/statistics/categories", s.router.Transaction.GetCategoryStatistics)
+			transactions.GET("/statistics/periods", s.router.Transaction.GetPeriodStatistics)
 			transactions.GET("/:id", s.router.Transaction.GetTransaction)
 			transactions.PUT("/:id", s.router.Transaction.UpdateTransaction)
 			transactions.DELETE("/:id", s.router.Transaction.DeleteTransaction)

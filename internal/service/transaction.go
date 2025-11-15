@@ -100,3 +100,55 @@ func (s *TransactionService) GetList(ctx context.Context, logined model.User) ([
 
 	return transactions, nil
 }
+
+func (s *TransactionService) GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error) {
+	params.Validate()
+
+	transactions, total, err := s.repo.GetListPaginated(ctx, int(logined.ID), params)
+	if err != nil {
+		return model.PaginatedTransactionsResponse{}, err
+	}
+
+	return model.NewPaginatedResponse(transactions, total, params), nil
+}
+
+func (s *TransactionService) GetBalanceStatistics(ctx context.Context, logined model.User) (model.CurrentBalanceStatistics, error) {
+	stats, err := s.repo.GetBalanceStatistics(ctx, int(logined.ID))
+	if err != nil {
+		return model.CurrentBalanceStatistics{}, err
+	}
+
+	return stats, nil
+}
+
+func (s *TransactionService) GetCategoryStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.CategoryStatisticsResponse, error) {
+	if period == "" {
+		period = model.PeriodTypeDay
+	}
+
+	items, err := s.repo.GetCategoryStatistics(ctx, int(logined.ID), period, from, to)
+	if err != nil {
+		return model.CategoryStatisticsResponse{}, err
+	}
+
+	return model.CategoryStatisticsResponse{
+		Period: period,
+		Items:  items,
+	}, nil
+}
+
+func (s *TransactionService) GetPeriodStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.PeriodStatisticsResponse, error) {
+	if period == "" {
+		period = model.PeriodTypeDay
+	}
+
+	items, err := s.repo.GetPeriodStatistics(ctx, int(logined.ID), period, from, to)
+	if err != nil {
+		return model.PeriodStatisticsResponse{}, err
+	}
+
+	return model.PeriodStatisticsResponse{
+		Period: period,
+		Items:  items,
+	}, nil
+}

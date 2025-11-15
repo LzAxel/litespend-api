@@ -8,6 +8,7 @@ import (
 	"litespend-api/internal/service"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type TransactionRouter struct {
@@ -149,11 +150,113 @@ func (r *TransactionRouter) GetTransactions(c *gin.Context) {
 		return
 	}
 
-	transactions, err := r.service.Transaction.GetList(c.Request.Context(), logined)
+	params := ParsePaginationFromContext(c)
+
+	result, err := r.service.Transaction.GetListPaginated(c.Request.Context(), logined, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, result)
+}
+
+func (r *TransactionRouter) GetBalanceStatistics(c *gin.Context) {
+	logined, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	stats, err := r.service.Transaction.GetBalanceStatistics(c.Request.Context(), logined)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+func (r *TransactionRouter) GetCategoryStatistics(c *gin.Context) {
+	logined, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	periodStr := c.DefaultQuery("period", "day")
+	period := model.PeriodType(periodStr)
+	if period != model.PeriodTypeDay && period != model.PeriodTypeWeek && period != model.PeriodTypeMonth {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid period. must be day, week, or month"})
+		return
+	}
+
+	var from, to *time.Time
+	if fromStr := c.Query("from"); fromStr != "" {
+		parsedFrom, err := time.Parse(time.RFC3339, fromStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from date format. use RFC3339"})
+			return
+		}
+		from = &parsedFrom
+	}
+
+	if toStr := c.Query("to"); toStr != "" {
+		parsedTo, err := time.Parse(time.RFC3339, toStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to date format. use RFC3339"})
+			return
+		}
+		to = &parsedTo
+	}
+
+	result, err := r.service.Transaction.GetCategoryStatistics(c.Request.Context(), logined, period, from, to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (r *TransactionRouter) GetPeriodStatistics(c *gin.Context) {
+	logined, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	periodStr := c.DefaultQuery("period", "day")
+	period := model.PeriodType(periodStr)
+	if period != model.PeriodTypeDay && period != model.PeriodTypeWeek && period != model.PeriodTypeMonth {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid period. must be day, week, or month"})
+		return
+	}
+
+	var from, to *time.Time
+	if fromStr := c.Query("from"); fromStr != "" {
+		parsedFrom, err := time.Parse(time.RFC3339, fromStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from date format. use RFC3339"})
+			return
+		}
+		from = &parsedFrom
+	}
+
+	if toStr := c.Query("to"); toStr != "" {
+		parsedTo, err := time.Parse(time.RFC3339, toStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to date format. use RFC3339"})
+			return
+		}
+		to = &parsedTo
+	}
+
+	result, err := r.service.Transaction.GetPeriodStatistics(c.Request.Context(), logined, period, from, to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

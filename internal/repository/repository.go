@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jmoiron/sqlx"
 	"litespend-api/internal/model"
+	"time"
 )
 
 type UserRepository interface {
@@ -20,6 +21,10 @@ type TransactionRepository interface {
 	Delete(ctx context.Context, id int) error
 	GetByID(ctx context.Context, id int) (model.Transaction, error)
 	GetList(ctx context.Context, userID int) ([]model.Transaction, error)
+	GetListPaginated(ctx context.Context, userID int, params model.PaginationParams) ([]model.Transaction, int, error)
+	GetBalanceStatistics(ctx context.Context, userID int) (model.CurrentBalanceStatistics, error)
+	GetCategoryStatistics(ctx context.Context, userID int, period model.PeriodType, from, to *time.Time) ([]model.CategoryStatisticsItem, error)
+	GetPeriodStatistics(ctx context.Context, userID int, period model.PeriodType, from, to *time.Time) ([]model.PeriodStatisticsItem, error)
 }
 
 type CategoryRepository interface {

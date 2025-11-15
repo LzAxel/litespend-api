@@ -41,3 +41,5 @@ type UpdateTransactionRequest struct {
 	Type        *TransactionType `json:"type"`
 	DateTime    *time.Time       `json:"date_time"`
 }
+
+type PaginatedTransactionsResponse = PaginatedResponse[Transaction]
