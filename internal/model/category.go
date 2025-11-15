@@ -12,7 +12,7 @@ type TransactionCategory struct {
 
 type CreateCategoryRequest struct {
 	Name string          `json:"name" binding:"required"`
-	Type TransactionType `json:"type" binding:"required"`
+	Type TransactionType `json:"type"`
 }
 
 type UpdateCategoryRequest struct {

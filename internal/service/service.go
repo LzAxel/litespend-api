@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
 	"litespend-api/internal/session"
+	"time"
 )
 
 type Service struct {
@@ -18,8 +18,8 @@ type Service struct {
 
 type User interface {
 	Register(ctx context.Context, user model.RegisterRequest) error
-	Login(ctx context.Context, c *gin.Context, req model.LoginRequest) (model.User, error)
-	Logout(ctx context.Context, c *gin.Context) error
+	Login(ctx context.Context, req model.LoginRequest) (model.User, error)
+	Logout(ctx context.Context) error
 }
 
 type Transaction interface {
@@ -28,6 +28,10 @@ type Transaction interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.Transaction, error)
 	GetList(ctx context.Context, logined model.User) ([]model.Transaction, error)
+	GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error)
+	GetBalanceStatistics(ctx context.Context, logined model.User) (model.CurrentBalanceStatistics, error)
+	GetCategoryStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.CategoryStatisticsResponse, error)
+	GetPeriodStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.PeriodStatisticsResponse, error)
 }
 
 type Category interface {
@@ -54,7 +58,7 @@ type Auth interface {
 
 func NewService(repository *repository.Repository, sessionManager *session.SessionManager) *Service {
 	return &Service{
-		User:              NewUserService(repository.UserRepository, sessionManager),
+		User:              NewUserService(repository.UserRepository),
 		Transaction:       NewTransactionService(repository.TransactionRepository),
 		Category:          NewCategoryService(repository.CategoryRepository),
 		PrescribedExpanse: NewPrescribedExpanseService(repository.PrescribedExpanseRepository),

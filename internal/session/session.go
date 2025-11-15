@@ -69,10 +69,10 @@ func (s *SessionManager) LoadAndSave(ginCtx *gin.Context) {
 // Put adds a key and corresponding value to the session data. Any existing
 // value for the key will be replaced. The session data status will be set to
 // Modified.
-func (s *SessionManager) Put(ctx *gin.Context, key string, val interface{}) {
-	s.manager.Put(ctx.Request.Context(), key, val)
-	tok, exp, _ := s.manager.Commit(ctx.Request.Context())
-	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, tok, exp)
+func (s *SessionManager) Put(r *http.Request, w http.ResponseWriter, key string, val interface{}) {
+	s.manager.Put(r.Context(), key, val)
+	tok, exp, _ := s.manager.Commit(r.Context())
+	s.manager.WriteSessionCookie(r.Context(), w, tok, exp)
 }
 
 // Get returns the value for a given key from the session data. The return
@@ -86,21 +86,21 @@ func (s *SessionManager) Put(ctx *gin.Context, key string, val interface{}) {
 //
 // Also see the GetString(), GetInt(), GetBytes() and other helper methods which
 // wrap the type conversion for common types.
-func (s *SessionManager) Get(ctx *gin.Context, key string) interface{} {
-	val := s.manager.Get(ctx.Request.Context(), key)
-	s.manager.Commit(ctx.Request.Context())
+func (s *SessionManager) Get(r *http.Request, key string) interface{} {
+	val := s.manager.Get(r.Context(), key)
+	s.manager.Commit(r.Context())
 	return val
 }
 
 // Destroy deletes the session data from the session store and sets the session
 // status to Destroyed. Any further operations in the same request cycle will
 // result in a new session being created.
-func (s *SessionManager) Destroy(ctx *gin.Context) error {
-	err := s.manager.Destroy(ctx.Request.Context())
+func (s *SessionManager) Destroy(r *http.Request, w http.ResponseWriter) error {
+	err := s.manager.Destroy(r.Context())
 	if err != nil {
 		return err
 	}
-	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, "", time.Time{})
+	s.manager.WriteSessionCookie(r.Context(), w, "", time.Time{})
 	return nil
 }
 
@@ -114,13 +114,13 @@ func (s *SessionManager) Destroy(ctx *gin.Context) error {
 // RenewToken before making any changes to privilege levels (e.g. login and
 // logout operations). See https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Session_Management_Cheat_Sheet.md#renew-the-session-id-after-any-privilege-level-change
 // for additional information.
-func (s *SessionManager) RenewToken(ctx *gin.Context) error {
-	err := s.manager.RenewToken(ctx.Request.Context())
+func (s *SessionManager) RenewToken(r *http.Request, w http.ResponseWriter) error {
+	err := s.manager.RenewToken(r.Context())
 	if err != nil {
 		return err
 	}
-	tok, exp, _ := s.manager.Commit(ctx.Request.Context())
-	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, tok, exp)
+	tok, exp, _ := s.manager.Commit(r.Context())
+	s.manager.WriteSessionCookie(r.Context(), w, tok, exp)
 	return nil
 }
 
@@ -128,19 +128,18 @@ func (s *SessionManager) RenewToken(ctx *gin.Context) error {
 // is retained after a user closes their browser). RememberMe only has an effect
 // if you have set SessionManager.Cookie.Persist = false (the default is true) and
 // you are using the standard LoadAndSave() middleware.
-func (s *SessionManager) RememberMe(ctx *gin.Context, val bool) {
-	s.manager.RememberMe(ctx.Request.Context(), val)
-	tok, exp, _ := s.manager.Commit(ctx.Request.Context())
-	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, tok, exp)
+func (s *SessionManager) RememberMe(r *http.Request, w http.ResponseWriter, val bool) {
+	s.manager.RememberMe(r.Context(), val)
+	tok, exp, _ := s.manager.Commit(r.Context())
+	s.manager.WriteSessionCookie(r.Context(), w, tok, exp)
 }
 
 // GetString returns the string value for a given key from the session data.
 // The zero value for a string ("") is returned if the key does not exist or the
 // value could not be type asserted to a string.
-func (s *SessionManager) GetString(ctx *gin.Context, key string) string {
-	val := s.manager.GetString(ctx.Request.Context(), key)
-	tok, exp, _ := s.manager.Commit(ctx.Request.Context())
-	s.manager.WriteSessionCookie(ctx.Request.Context(), ctx.Writer, tok, exp)
+func (s *SessionManager) GetString(r *http.Request, key string) string {
+	val := s.manager.GetString(r.Context(), key)
+	s.manager.Commit(r.Context())
 	return val
 }
 

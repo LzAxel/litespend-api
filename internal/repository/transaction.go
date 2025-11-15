@@ -106,7 +106,7 @@ func (r TransactionRepositoryPostgres) GetByID(ctx context.Context, id int) (mod
 }
 
 func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID int) ([]model.Transaction, error) {
-	var transactions []model.Transaction
+	var transactions []model.Transaction = make([]model.Transaction, 0)
 
 	err := r.db.SelectContext(ctx, &transactions, `SELECT * FROM transactions WHERE user_id = $1 ORDER BY date_time DESC`, userID)
 	if err != nil {
@@ -117,7 +117,7 @@ func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID int) 
 }
 
 func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, userID int, params model.PaginationParams) ([]model.Transaction, int, error) {
-	var transactions []model.Transaction
+	var transactions []model.Transaction = make([]model.Transaction, 0)
 	var total int
 
 	err := r.db.GetContext(ctx, &total, `SELECT COUNT(*) FROM transactions WHERE user_id = $1`, userID)

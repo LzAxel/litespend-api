@@ -5,16 +5,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"litespend-api/internal/model"
 	"litespend-api/internal/service"
+	"litespend-api/internal/session"
 	"net/http"
 )
 
 type UserRouter struct {
-	service *service.Service
+	service        *service.Service
+	sessionManager *session.SessionManager
 }
 
-func NewUserRouter(service *service.Service) *UserRouter {
+func NewUserRouter(service *service.Service, sessionManager *session.SessionManager) *UserRouter {
 	return &UserRouter{
-		service: service,
+		service:        service,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -41,7 +44,7 @@ func (r *UserRouter) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := r.service.User.Login(c.Request.Context(), c, req)
+	user, err := r.service.User.Login(c.Request.Context(), req)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -49,6 +52,16 @@ func (r *UserRouter) Login(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	if r.sessionManager != nil {
+		err = r.sessionManager.RenewToken(c.Request, c.Writer)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create session"})
+			return
+		}
+
+		r.sessionManager.Put(c.Request, c.Writer, "user_id", int(user.ID))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -62,10 +75,18 @@ func (r *UserRouter) Login(c *gin.Context) {
 }
 
 func (r *UserRouter) Logout(c *gin.Context) {
-	err := r.service.User.Logout(c.Request.Context(), c)
+	err := r.service.User.Logout(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	if r.sessionManager != nil {
+		err = r.sessionManager.Destroy(c.Request, c.Writer)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to destroy session"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})

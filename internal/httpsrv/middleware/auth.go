@@ -13,7 +13,7 @@ const UserContextKey = "user"
 
 func RequireAuth(sessionManager *session.SessionManager, userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDVal := sessionManager.Get(c, "user_id")
+		userIDVal := sessionManager.Get(c.Request, "user_id")
 		if userIDVal == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
 			c.Abort()

@@ -3,11 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"litespend-api/internal/model"
 	"litespend-api/internal/pkg/hash"
 	"litespend-api/internal/repository"
-	"litespend-api/internal/session"
 	"time"
 )
 
@@ -17,14 +15,12 @@ var (
 )
 
 type UserService struct {
-	repo           repository.UserRepository
-	sessionManager *session.SessionManager
+	repo repository.UserRepository
 }
 
-func NewUserService(repository repository.UserRepository, sessionManager *session.SessionManager) *UserService {
+func NewUserService(repository repository.UserRepository) *UserService {
 	return &UserService{
-		repo:           repository,
-		sessionManager: sessionManager,
+		repo: repository,
 	}
 }
 
@@ -47,7 +43,7 @@ func (s *UserService) Register(ctx context.Context, user model.RegisterRequest) 
 	return nil
 }
 
-func (s *UserService) Login(ctx context.Context, c *gin.Context, req model.LoginRequest) (model.User, error) {
+func (s *UserService) Login(ctx context.Context, req model.LoginRequest) (model.User, error) {
 	user, err := s.repo.GetByUsername(ctx, req.Username)
 	if err != nil {
 		return model.User{}, ErrInvalidCredentials
@@ -58,21 +54,9 @@ func (s *UserService) Login(ctx context.Context, c *gin.Context, req model.Login
 		return model.User{}, ErrInvalidCredentials
 	}
 
-	if s.sessionManager != nil {
-		err = s.sessionManager.RenewToken(c)
-		if err != nil {
-			return model.User{}, err
-		}
-
-		s.sessionManager.Put(c, "user_id", int(user.ID))
-	}
-
 	return user, nil
 }
 
-func (s *UserService) Logout(ctx context.Context, c *gin.Context) error {
-	if s.sessionManager != nil {
-		return s.sessionManager.Destroy(c)
-	}
+func (s *UserService) Logout(ctx context.Context) error {
 	return nil
 }

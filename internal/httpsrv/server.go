@@ -1,6 +1,7 @@
 package httpsrv
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	sloggin "github.com/samber/slog-gin"
 	"litespend-api/internal/config"
@@ -27,7 +28,7 @@ func NewServer(config config.ServerConfig, services *service.Service, sessionMan
 		gin:            gin.Default(),
 		config:         config,
 		service:        services,
-		router:         router.NewRouter(services),
+		router:         router.NewRouter(services, sessionManager),
 		sessionManager: sessionManager,
 		repository:     repo,
 	}
@@ -41,6 +42,13 @@ func (s *Server) setup() {
 	s.gin.Use(
 		gin.Recovery(),
 		sloggin.New(slog.Default()),
+		cors.New(cors.Config{
+			AllowOrigins:     []string{"http://localhost:5173"},
+			AllowMethods:     []string{"POST", "GET", "OPTIONS", "PUT", "PATCH", "DELETE"},
+			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+			AllowFiles:       true,
+			AllowCredentials: true,
+		}),
 		s.sessionManager.LoadAndSave,
 	)
 

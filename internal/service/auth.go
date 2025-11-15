@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
 	"litespend-api/internal/session"
