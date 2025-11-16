@@ -1,9 +1,11 @@
 package session
 
 import (
+	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"time"
 )
@@ -23,8 +25,8 @@ func NewSessionManager(store SessionStore) *SessionManager {
 		manager: scs.New(),
 	}
 
-	sessionManager.manager.Lifetime = 24 * time.Hour
-	sessionManager.manager.IdleTimeout = 2 * time.Hour
+	sessionManager.manager.Lifetime = 7 * 24 * time.Hour
+	sessionManager.manager.IdleTimeout = 48 * time.Hour
 	sessionManager.manager.Cookie.Secure = true
 	sessionManager.manager.Cookie.HttpOnly = true
 	sessionManager.manager.Cookie.SameSite = http.SameSiteLaxMode
@@ -41,6 +43,10 @@ func (s *SessionManager) GetManager() *scs.SessionManager {
 
 func NewSessionInMemoryStore() SessionStore {
 	return memstore.New()
+}
+
+func NewSessionPostgresStore(pool *pgxpool.Pool) SessionStore {
+	return pgxstore.New(pool)
 }
 
 func (s *SessionManager) LoadAndSave(ginCtx *gin.Context) {

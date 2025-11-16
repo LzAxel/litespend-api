@@ -98,6 +98,7 @@ export interface PaginatedResponse<T> {
 
 export interface CurrentBalanceStatistics {
   balance: string;
+  free_balance: string;
   total_income: string;
   total_expense: string;
 }

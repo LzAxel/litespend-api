@@ -22,13 +22,14 @@ func NewApp(cfg config.Config) *App {
 	ctx := context.Background()
 	slog.InfoContext(ctx, "Starting app")
 
-	psql, err := databases.GetPostgresDB(ctx, cfg.Postgres)
+	psqlPool, err := databases.GetPostgresPool(ctx, cfg.Postgres)
 	if err != nil {
 		panic(err)
 	}
+	psql := databases.GetPostgresDB(psqlPool)
 
 	repo := repository.NewRepository(psql)
-	sessionManager := session.NewSessionManager(session.NewSessionInMemoryStore())
+	sessionManager := session.NewSessionManager(session.NewSessionPostgresStore(psqlPool))
 	services := service.NewService(repo, sessionManager)
 
 	server := httpsrv.NewServer(cfg.Server, services, sessionManager, repo)

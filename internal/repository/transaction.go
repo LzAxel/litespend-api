@@ -184,14 +184,13 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 
 func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context, userID int) (model.CurrentBalanceStatistics, error) {
 	var stats model.CurrentBalanceStatistics
-	var totalIncome, totalExpense *float64
+	var totalIncome, totalExpense, unpaidPrescribed *float64
 
 	row := r.db.QueryRowContext(ctx,
 		`SELECT 
-			COALESCE(SUM(CASE WHEN type = $1 THEN amount ELSE 0 END), 0) as total_income,
-			COALESCE(SUM(CASE WHEN type = $2 THEN amount ELSE 0 END), 0) as total_expense
-		FROM transactions 
-		WHERE user_id = $3`,
+			COALESCE(SUM(CASE WHEN tr.type = $1 THEN tr.amount ELSE 0 END), 0) as total_income,
+			COALESCE(SUM(CASE WHEN tr.type = $2 THEN tr.amount ELSE 0 END), 0) as total_expense
+		FROM transactions tr LEFT JOIN prescribed_expanses pe ON tr.prescribed_expanse_id = pe.id WHERE tr.user_id = $3`,
 		model.TransactionTypeIncome, model.TransactionTypeExpanse, userID)
 
 	err := row.Scan(&totalIncome, &totalExpense)
@@ -199,18 +198,26 @@ func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context,
 		return stats, err
 	}
 
-	income := float64(0)
-	expense := float64(0)
-	if totalIncome != nil {
-		income = *totalIncome
-	}
-	if totalExpense != nil {
-		expense = *totalExpense
+	err = r.db.GetContext(ctx, &unpaidPrescribed,
+		`SELECT COALESCE(SUM(CASE WHEN tr.id IS NULL THEN pe.amount ELSE pe.amount - tr.amount END), 0)
+			FROM prescribed_expanses pe LEFT JOIN transactions tr ON tr.prescribed_expanse_id = pe.id
+			WHERE pe.user_id = $1`, userID)
+	if err != nil {
+		return stats, err
 	}
 
-	stats.TotalIncome = decimal.NewFromFloat(income)
-	stats.TotalExpense = decimal.NewFromFloat(expense)
+	if totalIncome != nil {
+		stats.TotalIncome = decimal.NewFromFloat(*totalIncome)
+	}
+	if totalExpense != nil {
+		stats.TotalExpense = decimal.NewFromFloat(*totalExpense)
+	}
+
 	stats.Balance = stats.TotalIncome.Sub(stats.TotalExpense)
+
+	if unpaidPrescribed != nil {
+		stats.FreeBalance = stats.Balance.Sub(decimal.NewFromFloat(*unpaidPrescribed))
+	}
 
 	return stats, nil
 }

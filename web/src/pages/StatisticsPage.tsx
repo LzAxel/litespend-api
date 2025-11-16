@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { transactionsApi, type PeriodType } from '@/lib/api';
 
 export function StatisticsPage() {
-  const [balance, setBalance] = useState({ balance: '0', total_income: '0', total_expense: '0' });
+  const [balance, setBalance] = useState({ balance: '0', total_income: '0', total_expense: '0', free_balance: '0' });
   const [period, setPeriod] = useState<PeriodType>('day');
   const [periodStats, setPeriodStats] = useState<any[]>([]);
   const [categoryStats, setCategoryStats] = useState<any[]>([]);
@@ -49,11 +49,19 @@ export function StatisticsPage() {
       <h1 className="text-3xl font-bold text-gray-900">Статистика</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Остаток</h3>
+        <div className="bg-white p-6 rounded-lg shadow flex flex-row justify-between">
+          <div className="">
+            <h3 className="text-sm font-medium text-gray-500">Остаток</h3>
+            <p className="text-2xl font-bold text-gray-900 mt-2">
+              {parseFloat(balance.balance).toFixed(2)}
+            </p>
+          </div>
+          <div className="">
+          <h3 className="text-sm font-medium text-gray-500">Без обязательных</h3>
           <p className="text-2xl font-bold text-gray-900 mt-2">
-            {parseFloat(balance.balance).toFixed(2)}
+            {parseFloat(balance.free_balance).toFixed(2)}
           </p>
+          </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Всего доходов</h3>

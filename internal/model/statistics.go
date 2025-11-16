@@ -15,6 +15,7 @@ const (
 
 type CurrentBalanceStatistics struct {
 	Balance      decimal.Decimal `json:"balance"`
+	FreeBalance  decimal.Decimal `json:"free_balance"`
 	TotalIncome  decimal.Decimal `json:"total_income"`
 	TotalExpense decimal.Decimal `json:"total_expense"`
 }
