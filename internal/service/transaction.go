@@ -25,15 +25,13 @@ func NewTransactionService(repository repository.TransactionRepository) *Transac
 
 func (s *TransactionService) Create(ctx context.Context, logined model.User, req model.CreateTransactionRequest) (int, error) {
 	transaction := model.Transaction{
-		UserID:              logined.ID,
-		CategoryID:          req.CategoryID,
-		GoalID:              req.GoalID,
-		PrescribedExpanseID: req.PrescribedExpanseID,
-		Description:         req.Description,
-		Amount:              req.Amount,
-		Type:                req.Type,
-		DateTime:            req.DateTime,
-		CreatedAt:           time.Now(),
+		UserID:         logined.ID,
+		CategoryID:     req.CategoryID,
+		Description:    req.Description,
+		Amount:         req.Amount,
+		Date:           req.Date,
+		BillInstanceID: req.BillInstanceID,
+		CreatedAt:      time.Now(),
 	}
 
 	id, err := s.repo.Create(ctx, transaction)
@@ -94,7 +92,7 @@ func (s *TransactionService) GetByID(ctx context.Context, logined model.User, id
 }
 
 func (s *TransactionService) GetList(ctx context.Context, logined model.User) ([]model.Transaction, error) {
-	transactions, err := s.repo.GetList(ctx, int(logined.ID))
+	transactions, err := s.repo.GetList(ctx, logined.ID)
 	if err != nil {
 		return transactions, err
 	}
@@ -105,7 +103,7 @@ func (s *TransactionService) GetList(ctx context.Context, logined model.User) ([
 func (s *TransactionService) GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error) {
 	params.Validate()
 
-	transactions, total, err := s.repo.GetListPaginated(ctx, int(logined.ID), params)
+	transactions, total, err := s.repo.GetListPaginated(ctx, logined.ID, params)
 	if err != nil {
 		return model.PaginatedTransactionsResponse{}, err
 	}
@@ -114,7 +112,7 @@ func (s *TransactionService) GetListPaginated(ctx context.Context, logined model
 }
 
 func (s *TransactionService) GetBalanceStatistics(ctx context.Context, logined model.User) (model.CurrentBalanceStatistics, error) {
-	stats, err := s.repo.GetBalanceStatistics(ctx, int(logined.ID))
+	stats, err := s.repo.GetBalanceStatistics(ctx, logined.ID)
 	if err != nil {
 		return model.CurrentBalanceStatistics{}, err
 	}
@@ -127,7 +125,7 @@ func (s *TransactionService) GetCategoryStatistics(ctx context.Context, logined 
 		period = model.PeriodTypeDay
 	}
 
-	items, err := s.repo.GetCategoryStatistics(ctx, int(logined.ID), period, from, to)
+	items, err := s.repo.GetCategoryStatistics(ctx, logined.ID, period, from, to)
 	if err != nil {
 		return model.CategoryStatisticsResponse{}, err
 	}
@@ -143,7 +141,7 @@ func (s *TransactionService) GetPeriodStatistics(ctx context.Context, logined mo
 		period = model.PeriodTypeDay
 	}
 
-	items, err := s.repo.GetPeriodStatistics(ctx, int(logined.ID), period, from, to)
+	items, err := s.repo.GetPeriodStatistics(ctx, logined.ID, period, from, to)
 	if err != nil {
 		return model.PeriodStatisticsResponse{}, err
 	}

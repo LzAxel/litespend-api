@@ -5,44 +5,31 @@ import (
 	"time"
 )
 
-type TransactionType uint8
-
-const (
-	TransactionTypeIncome TransactionType = iota
-	TransactionTypeExpanse
-)
-
 type Transaction struct {
-	ID                  uint64          `json:"id" db:"id"`
-	UserID              uint64          `json:"user_id" db:"user_id"`
-	CategoryID          uint64          `json:"category_id" db:"category_id"`
-	GoalID              *uint64         `json:"goal_id,omitempty" db:"goal_id"`
-	PrescribedExpanseID *uint64         `json:"prescribed_expanse_id,omitempty" db:"prescribed_expanse_id"`
-	Description         string          `json:"description" db:"description"`
-	Amount              decimal.Decimal `json:"amount" db:"amount"`
-	Type                TransactionType `json:"type" db:"type"`
-	DateTime            time.Time       `json:"date_time" db:"date_time"`
-	CreatedAt           time.Time       `json:"created_at" db:"created_at"`
+	ID             uint64          `json:"id" db:"id"`
+	UserID         uint64          `json:"user_id" db:"user_id"`
+	CategoryID     *uint64         `json:"category_id,omitempty" db:"category_id"`
+	BillInstanceID *uint64         `json:"bill_instance_id,omitempty" db:"bill_instance_id"`
+	Amount         decimal.Decimal `json:"amount" db:"amount"`
+	Date           time.Time       `json:"date" db:"date"`
+	Description    string          `json:"description" db:"description"`
+	CreatedAt      time.Time       `json:"created_at" db:"created_at"`
 }
 
 type CreateTransactionRequest struct {
-	CategoryID          uint64          `json:"category_id"`
-	GoalID              *uint64         `json:"goal_id,omitempty"`
-	PrescribedExpanseID *uint64         `json:"prescribed_expanse_id,omitempty"`
-	Description         string          `json:"description"`
-	Amount              decimal.Decimal `json:"amount"`
-	Type                TransactionType `json:"type"`
-	DateTime            time.Time       `json:"date_time"`
+	CategoryID     *uint64         `json:"category_id,omitempty"`
+	Amount         decimal.Decimal `json:"amount"`
+	Date           time.Time       `json:"date"`
+	Description    string          `json:"description"`
+	BillInstanceID *uint64         `json:"bill_instance_id,omitempty"`
 }
 
 type UpdateTransactionRequest struct {
-	CategoryID          *uint64          `json:"category_id"`
-	GoalID              *uint64          `json:"goal_id,omitempty"`
-	PrescribedExpanseID *uint64          `json:"prescribed_expanse_id,omitempty"`
-	Description         *string          `json:"description"`
-	Amount              *decimal.Decimal `json:"amount"`
-	Type                *TransactionType `json:"type"`
-	DateTime            *time.Time       `json:"date_time"`
+	BillInstanceID *uint64          `json:"bill_instance_id,omitempty"`
+	CategoryID     *uint64          `json:"category_id,omitempty"`
+	Amount         *decimal.Decimal `json:"amount,omitempty"`
+	Date           *time.Time       `json:"date,omitempty"`
+	Description    *string          `json:"description,omitempty"`
 }
 
 type PaginatedTransactionsResponse = PaginatedResponse[Transaction]

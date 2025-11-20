@@ -28,14 +28,12 @@ func (r TransactionRepositoryPostgres) Create(ctx context.Context, transaction m
 
 	err := databases.WithinTransaction(ctx, r.db, func(tx *sqlx.Tx) error {
 		err := tx.GetContext(ctx, &createdID,
-			`INSERT INTO transactions(user_id, category_id, goal_id, prescribed_expanse_id, description, amount, type, date_time, created_at) 
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-			transaction.UserID, transaction.CategoryID, transaction.GoalID, transaction.PrescribedExpanseID, transaction.Description,
-			transaction.Amount, transaction.Type, transaction.DateTime, transaction.CreatedAt)
+			`INSERT INTO transactions(user_id, category_id, amount, date, description, created_at, bill_instance_id) 
+			 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+			transaction.UserID, transaction.CategoryID, transaction.Amount, transaction.Date, transaction.Description, transaction.CreatedAt, transaction.BillInstanceID)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 	if err != nil {
@@ -52,14 +50,6 @@ func (r TransactionRepositoryPostgres) Update(ctx context.Context, id int, dto m
 		query = query.Set("category_id", *dto.CategoryID)
 	}
 
-	if dto.GoalID != nil {
-		query = query.Set("goal_id", *dto.GoalID)
-	}
-
-	if dto.PrescribedExpanseID != nil {
-		query = query.Set("prescribed_expanse_id", *dto.PrescribedExpanseID)
-	}
-
 	if dto.Description != nil {
 		query = query.Set("description", *dto.Description)
 	}
@@ -68,12 +58,12 @@ func (r TransactionRepositoryPostgres) Update(ctx context.Context, id int, dto m
 		query = query.Set("amount", *dto.Amount)
 	}
 
-	if dto.Type != nil {
-		query = query.Set("type", *dto.Type)
+	if dto.Date != nil {
+		query = query.Set("date", *dto.Date)
 	}
 
-	if dto.DateTime != nil {
-		query = query.Set("date_time", *dto.DateTime)
+	if dto.BillInstanceID != nil {
+		query = query.Set("bill_instance_id", *dto.BillInstanceID)
 	}
 
 	sqlQuery, args, err := query.ToSql()
@@ -109,10 +99,10 @@ func (r TransactionRepositoryPostgres) GetByID(ctx context.Context, id int) (mod
 	return transaction, nil
 }
 
-func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID int) ([]model.Transaction, error) {
-	var transactions []model.Transaction = make([]model.Transaction, 0)
+func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.Transaction, error) {
+	var transactions []model.Transaction
 
-	err := r.db.SelectContext(ctx, &transactions, `SELECT * FROM transactions WHERE user_id = $1 ORDER BY date_time DESC`, userID)
+	err := r.db.SelectContext(ctx, &transactions, `SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC, created_at DESC`, userID)
 	if err != nil {
 		return transactions, err
 	}
@@ -120,11 +110,10 @@ func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID int) 
 	return transactions, nil
 }
 
-func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, userID int, params model.PaginationParams) ([]model.Transaction, int, error) {
-	var transactions []model.Transaction = make([]model.Transaction, 0)
+func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, userID uint64, params model.PaginationParams) ([]model.Transaction, int, error) {
+	var transactions []model.Transaction
 	var total int
 
-	// Построение WHERE условия
 	whereClause := "WHERE t.user_id = $1"
 	args := []interface{}{userID}
 	argIndex := 1
@@ -135,15 +124,13 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 		args = append(args, "%"+*params.Search+"%")
 	}
 
-	// Подсчет общего количества
 	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM transactions t %s`, whereClause)
 	err := r.db.GetContext(ctx, &total, countQuery, args...)
 	if err != nil {
 		return transactions, 0, err
 	}
 
-	// Построение ORDER BY
-	orderBy := "ORDER BY t.date_time DESC"
+	orderBy := "ORDER BY t.date DESC, t.created_at DESC"
 	if params.SortBy != nil {
 		sortOrder := "DESC"
 		if params.SortOrder != nil && *params.SortOrder == model.SortOrderASC {
@@ -152,7 +139,7 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 
 		switch *params.SortBy {
 		case model.SortFieldDate:
-			orderBy = fmt.Sprintf("ORDER BY t.date_time %s", sortOrder)
+			orderBy = fmt.Sprintf("ORDER BY t.date %s", sortOrder)
 		case model.SortFieldDescription:
 			orderBy = fmt.Sprintf("ORDER BY t.description %s", sortOrder)
 		case model.SortFieldCategory:
@@ -160,7 +147,6 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 		}
 	}
 
-	// Выборка данных
 	argIndex++
 	limitArg := argIndex
 	argIndex++
@@ -182,47 +168,61 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 	return transactions, total, nil
 }
 
-func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context, userID int) (model.CurrentBalanceStatistics, error) {
+func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context, userID uint64) (model.CurrentBalanceStatistics, error) {
 	var stats model.CurrentBalanceStatistics
-	var totalIncome, totalExpense, unpaidPrescribed *float64
 
-	row := r.db.QueryRowContext(ctx,
-		`SELECT 
-			COALESCE(SUM(CASE WHEN tr.type = $1 THEN tr.amount ELSE 0 END), 0) as total_income,
-			COALESCE(SUM(CASE WHEN tr.type = $2 THEN tr.amount ELSE 0 END), 0) as total_expense
-		FROM transactions tr LEFT JOIN prescribed_expanses pe ON tr.prescribed_expanse_id = pe.id WHERE tr.user_id = $3`,
-		model.TransactionTypeIncome, model.TransactionTypeExpanse, userID)
+	query := `
+WITH vars AS (
+    SELECT $1::bigint AS uid,
+           EXTRACT(YEAR FROM CURRENT_DATE)::int  AS y,
+           EXTRACT(MONTH FROM CURRENT_DATE)::int AS m
+),
+on_accounts AS (
+    SELECT COALESCE(SUM(amount), 0)::numeric(14,2) AS balance
+    FROM transactions WHERE user_id = (SELECT uid FROM vars)
+),
+unpaid_bills AS (
+    SELECT COALESCE(SUM(amount_expected - amount_paid), 0)::numeric(14,2) AS reserved
+    FROM bill_instances bi
+    JOIN recurring_bills rb ON bi.recurring_bill_id = rb.id
+    WHERE rb.user_id = (SELECT uid FROM vars)
+      AND rb.is_active
+      AND (bi.year > (SELECT y FROM vars) OR (bi.year = (SELECT y FROM vars) AND bi.month >= (SELECT m FROM vars)))
+),
+budgeted_this_month AS (
+    SELECT COALESCE(SUM(budgeted), 0)::numeric(14,2) AS reserved
+    FROM monthly_budgets
+    WHERE user_id = (SELECT uid FROM vars)
+      AND year = (SELECT y FROM vars)
+      AND month = (SELECT m FROM vars)
+)
+SELECT 
+    on_accounts.balance AS on_accounts,
+    unpaid_bills.reserved AS reserved_bills,
+    budgeted_this_month.reserved AS reserved_budgets
+FROM vars, on_accounts, unpaid_bills, budgeted_this_month`
 
-	err := row.Scan(&totalIncome, &totalExpense)
-	if err != nil {
+	type row struct {
+		OnAccounts     decimal.Decimal `db:"on_accounts"`
+		ReservedBills  decimal.Decimal `db:"reserved_bills"`
+		ReservedBudget decimal.Decimal `db:"reserved_budgets"`
+	}
+
+	var snapshot row
+	if err := r.db.GetContext(ctx, &snapshot, query, userID); err != nil {
 		return stats, err
 	}
 
-	err = r.db.GetContext(ctx, &unpaidPrescribed,
-		`SELECT COALESCE(SUM(CASE WHEN tr.id IS NULL THEN pe.amount ELSE pe.amount - tr.amount END), 0)
-			FROM prescribed_expanses pe LEFT JOIN transactions tr ON tr.prescribed_expanse_id = pe.id
-			WHERE pe.user_id = $1`, userID)
-	if err != nil {
-		return stats, err
-	}
-
-	if totalIncome != nil {
-		stats.TotalIncome = decimal.NewFromFloat(*totalIncome)
-	}
-	if totalExpense != nil {
-		stats.TotalExpense = decimal.NewFromFloat(*totalExpense)
-	}
-
-	stats.Balance = stats.TotalIncome.Sub(stats.TotalExpense)
-
-	if unpaidPrescribed != nil {
-		stats.FreeBalance = stats.Balance.Sub(decimal.NewFromFloat(*unpaidPrescribed))
-	}
+	stats.OnAccounts = snapshot.OnAccounts
+	stats.ReservedBills = snapshot.ReservedBills
+	stats.ReservedBudgets = snapshot.ReservedBudget
+	stats.TotalReserved = snapshot.ReservedBills.Add(snapshot.ReservedBudget)
+	stats.FreeToDistribute = snapshot.OnAccounts.Sub(stats.TotalReserved)
 
 	return stats, nil
 }
 
-func (r TransactionRepositoryPostgres) GetCategoryStatistics(ctx context.Context, userID int, period model.PeriodType, from, to *time.Time) ([]model.CategoryStatisticsItem, error) {
+func (r TransactionRepositoryPostgres) GetCategoryStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.CategoryStatisticsItem, error) {
 	type categoryStatsRow struct {
 		CategoryID   uint64   `db:"category_id"`
 		CategoryName string   `db:"category_name"`
@@ -251,42 +251,37 @@ func (r TransactionRepositoryPostgres) GetCategoryStatistics(ctx context.Context
 
 	query := fmt.Sprintf(`
 		SELECT 
-			t.category_id,
-			tc.name as category_name,
-			TO_CHAR(date_trunc('%s', t.date_time), '%s') as period,
-			COALESCE(SUM(CASE WHEN t.type = $1 THEN t.amount ELSE 0 END), 0)::float as income,
-			COALESCE(SUM(CASE WHEN t.type = $2 THEN t.amount ELSE 0 END), 0)::float as expense
+			COALESCE(t.category_id, 0) as category_id,
+			COALESCE(c.name, 'Без категории') as category_name,
+			TO_CHAR(date_trunc('%s', t.date), '%s') as period,
+			COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0)::float as income,
+			COALESCE(SUM(CASE WHEN t.amount < 0 THEN ABS(t.amount) ELSE 0 END), 0)::float as expense
 		FROM transactions t
-		INNER JOIN transaction_categories tc ON t.category_id = tc.id
-		WHERE t.user_id = $3
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.user_id = $1
 	`, periodFormat, periodCharFormat)
 
-	args := []interface{}{
-		model.TransactionTypeIncome,
-		model.TransactionTypeExpanse,
-		userID,
-	}
-	argIndex := 3
+	args := []interface{}{userID}
+	argIndex := 1
 
 	if from != nil {
 		argIndex++
-		query += fmt.Sprintf(" AND t.date_time >= $%d", argIndex)
+		query += fmt.Sprintf(" AND t.date >= $%d", argIndex)
 		args = append(args, *from)
 	}
 
 	if to != nil {
 		argIndex++
-		query += fmt.Sprintf(" AND t.date_time <= $%d", argIndex)
+		query += fmt.Sprintf(" AND t.date <= $%d", argIndex)
 		args = append(args, *to)
 	}
 
 	query += fmt.Sprintf(`
-		GROUP BY t.category_id, tc.name, date_trunc('%s', t.date_time)
-		ORDER BY period DESC, tc.name
+		GROUP BY COALESCE(t.category_id, 0), c.name, date_trunc('%s', t.date)
+		ORDER BY period DESC, category_name
 	`, periodFormat)
 
-	err := r.db.SelectContext(ctx, &rows, query, args...)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
 		return nil, err
 	}
 
@@ -313,7 +308,7 @@ func (r TransactionRepositoryPostgres) GetCategoryStatistics(ctx context.Context
 	return items, nil
 }
 
-func (r TransactionRepositoryPostgres) GetPeriodStatistics(ctx context.Context, userID int, period model.PeriodType, from, to *time.Time) ([]model.PeriodStatisticsItem, error) {
+func (r TransactionRepositoryPostgres) GetPeriodStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.PeriodStatisticsItem, error) {
 	type periodStatsRow struct {
 		Period  string   `db:"period"`
 		Income  *float64 `db:"income"`
@@ -340,39 +335,34 @@ func (r TransactionRepositoryPostgres) GetPeriodStatistics(ctx context.Context, 
 
 	query := fmt.Sprintf(`
 		SELECT 
-			TO_CHAR(date_trunc('%s', t.date_time), '%s') as period,
-			COALESCE(SUM(CASE WHEN t.type = $1 THEN t.amount ELSE 0 END), 0)::float as income,
-			COALESCE(SUM(CASE WHEN t.type = $2 THEN t.amount ELSE 0 END), 0)::float as expense
+			TO_CHAR(date_trunc('%s', t.date), '%s') as period,
+			COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0)::float as income,
+			COALESCE(SUM(CASE WHEN t.amount < 0 THEN ABS(t.amount) ELSE 0 END), 0)::float as expense
 		FROM transactions t
-		WHERE t.user_id = $3
+		WHERE t.user_id = $1
 	`, periodFormat, periodCharFormat)
 
-	args := []interface{}{
-		model.TransactionTypeIncome,
-		model.TransactionTypeExpanse,
-		userID,
-	}
-	argIndex := 3
+	args := []interface{}{userID}
+	argIndex := 1
 
 	if from != nil {
 		argIndex++
-		query += fmt.Sprintf(" AND t.date_time >= $%d", argIndex)
+		query += fmt.Sprintf(" AND t.date >= $%d", argIndex)
 		args = append(args, *from)
 	}
 
 	if to != nil {
 		argIndex++
-		query += fmt.Sprintf(" AND t.date_time <= $%d", argIndex)
+		query += fmt.Sprintf(" AND t.date <= $%d", argIndex)
 		args = append(args, *to)
 	}
 
 	query += fmt.Sprintf(`
-		GROUP BY date_trunc('%s', t.date_time)
+		GROUP BY date_trunc('%s', t.date)
 		ORDER BY period DESC
 	`, periodFormat)
 
-	err := r.db.SelectContext(ctx, &rows, query, args...)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
 		return nil, err
 	}
 

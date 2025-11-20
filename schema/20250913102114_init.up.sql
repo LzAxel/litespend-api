@@ -1,7 +1,7 @@
 CREATE TABLE users
 (
     id            BIGSERIAL PRIMARY KEY UNIQUE,
-    username      TEXT UNIQUE,
+    username      VARCHAR(25) UNIQUE,
     password_hash TEXT      NOT NULL,
     created_at    TIMESTAMP NOT NULL,
     role          SMALLINT  NOT NULL
@@ -11,43 +11,55 @@ CREATE TABLE transaction_categories
 (
     id         BIGSERIAL PRIMARY KEY UNIQUE,
     user_id    BIGINT REFERENCES users (id) NOT NULL,
-    name       VARCHAR(255) NOT NULL,
-    type       SMALLINT     NOT NULL,
-    created_at TIMESTAMP    NOT NULL
+    name       VARCHAR(255)                 NOT NULL,
+    type       SMALLINT                     NOT NULL CHECK (type IN (1, 2)) NOT NULL,
+    created_at TIMESTAMP                    NOT NULL,
+    UNIQUE (user_id, name, type)
 );
 
-CREATE TABLE goals
+CREATE TABLE recurring_bills
 (
-    id            BIGSERIAL PRIMARY KEY UNIQUE,
-    name          VARCHAR(255)     NOT NULL,
-    target_amount DOUBLE PRECISION NOT NULL,
-    start_amount  DOUBLE PRECISION NOT NULL,
-    frequency     SMALLINT         NOT NULL,
-    deadline_date TIMESTAMP        NOT NULL,
-    created_at    TIMESTAMP        NOT NULL
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    name        TEXT           NOT NULL,
+    category_id BIGINT REFERENCES transaction_categories (id),
+    amount      NUMERIC(14, 2) NOT NULL,
+    day_due     SMALLINT CHECK (day_due BETWEEN 1 AND 31),
+    is_active   BOOLEAN,
+    created_at  TIMESTAMP
+);
+
+CREATE TABLE bill_instances
+(
+    id                BIGSERIAL PRIMARY KEY,
+    recurring_bill_id BIGINT         NOT NULL REFERENCES recurring_bills (id),
+    year              INT            NOT NULL,
+    month             INT            NOT NULL CHECK (month BETWEEN 1 AND 12),
+    amount_expected   NUMERIC(14, 2) NOT NULL,
+    created_at        TIMESTAMP,
+    UNIQUE (recurring_bill_id, year, month)
 );
 
 CREATE TABLE transactions
 (
-    id          BIGSERIAL PRIMARY KEY UNIQUE,
-    user_id     BIGINT REFERENCES users (id)                  NOT NULL,
-    category_id BIGINT REFERENCES transaction_categories (id) NOT NULL,
-    goal_id     BIGINT REFERENCES goals (id),
-    description VARCHAR(255)                                  NOT NULL,
-    amount      DOUBLE PRECISION                              NOT NULL,
-    type        SMALLINT                                      NOT NULL,
-    date_time   TIMESTAMP                                     NOT NULL,
-    created_at  TIMESTAMP                                     NOT NULL
+    id               BIGSERIAL PRIMARY KEY UNIQUE,
+    user_id          BIGINT REFERENCES users (id) NOT NULL,
+    category_id      BIGINT REFERENCES transaction_categories (id),
+    bill_instance_id BIGINT REFERENCES bill_instances (id),
+    description      VARCHAR(255)                 NOT NULL,
+    amount           NUMERIC(14, 2)               NOT NULL,
+    date             TIMESTAMP                    NOT NULL,
+    created_at       TIMESTAMP                    NOT NULL
 );
 
-CREATE TABLE prescribed_expanses
+CREATE TABLE budgets
 (
-    id          BIGSERIAL PRIMARY KEY UNIQUE,
-    user_id     BIGINT REFERENCES users (id)                  NOT NULL,
-    category_id BIGINT REFERENCES transaction_categories (id) NOT NULL,
-    description VARCHAR(255)                                  NOT NULL,
-    frequency   SMALLINT                                      NOT NULL,
-    amount      DOUBLE PRECISION                              NOT NULL,
-    date_time   TIMESTAMP                                     NOT NULL,
-    created_at  TIMESTAMP                                     NOT NULL
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    category_id BIGINT         NOT NULL REFERENCES transaction_categories (id),
+    year        INT            NOT NULL,
+    month       INT            NOT NULL CHECK (month BETWEEN 1 AND 12),
+    budgeted    NUMERIC(14, 2) NOT NULL,
+    created_at  TIMESTAMP,
+    UNIQUE (user_id, category_id, year, month)
 );

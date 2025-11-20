@@ -20,20 +20,17 @@ var (
 )
 
 type ImportService struct {
-	transactionRepo       repository.TransactionRepository
-	categoryRepo          repository.CategoryRepository
-	prescribedExpanseRepo repository.PrescribedExpanseRepository
+	transactionRepo repository.TransactionRepository
+	categoryRepo    repository.CategoryRepository
 }
 
 func NewImportService(
 	transactionRepo repository.TransactionRepository,
 	categoryRepo repository.CategoryRepository,
-	prescribedExpanseRepo repository.PrescribedExpanseRepository,
 ) *ImportService {
 	return &ImportService{
-		transactionRepo:       transactionRepo,
-		categoryRepo:          categoryRepo,
-		prescribedExpanseRepo: prescribedExpanseRepo,
+		transactionRepo: transactionRepo,
+		categoryRepo:    categoryRepo,
 	}
 }
 
@@ -112,15 +109,6 @@ func (s *ImportService) ImportData(ctx context.Context, logined model.User, file
 				result.CategoriesCreated++
 			}
 		}
-
-		// Импорт обязательных трат
-		if mapping.PrescribedExpanseAmount != nil {
-			if err := s.importPrescribedExpanse(ctx, logined, row, columnIndexes, mapping); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("Строка %d (обязательная трата): %v", i+1, err))
-			} else {
-				result.PrescribedExpansesCreated++
-			}
-		}
 	}
 
 	return result, nil
@@ -179,21 +167,6 @@ func (s *ImportService) getColumnIndexes(headers []string, mapping model.ExcelCo
 		if mapping.CategoryType != nil && strings.EqualFold(header, *mapping.CategoryType) {
 			indexes.categoryType = i
 		}
-		if mapping.PrescribedExpanseDescription != "" && strings.EqualFold(header, mapping.PrescribedExpanseDescription) {
-			indexes.prescribedExpanseDescription = i
-		}
-		if mapping.PrescribedExpanseAmount != nil && strings.EqualFold(header, *mapping.PrescribedExpanseAmount) {
-			indexes.prescribedExpanseAmount = i
-		}
-		if mapping.PrescribedExpanseFrequency != nil && strings.EqualFold(header, *mapping.PrescribedExpanseFrequency) {
-			indexes.prescribedExpanseFrequency = i
-		}
-		if mapping.PrescribedExpanseDate != nil && strings.EqualFold(header, *mapping.PrescribedExpanseDate) {
-			indexes.prescribedExpanseDate = i
-		}
-		if mapping.PrescribedExpanseCategory != nil && strings.EqualFold(header, *mapping.PrescribedExpanseCategory) {
-			indexes.prescribedExpanseCategory = i
-		}
 	}
 
 	return indexes
@@ -226,14 +199,6 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 		description = "Импортированная транзакция"
 	}
 
-	transactionType := model.TransactionTypeExpanse
-	if indexes.transactionType >= 0 {
-		typeStr := strings.ToLower(s.getCellValue(row, indexes.transactionType))
-		if strings.Contains(typeStr, "доход") || strings.Contains(typeStr, "income") || typeStr == "0" {
-			transactionType = model.TransactionTypeIncome
-		}
-	}
-
 	dateTime := time.Now()
 	if indexes.transactionDate >= 0 {
 		dateStr := s.getCellValue(row, indexes.transactionDate)
@@ -249,7 +214,7 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 	if indexes.transactionCategory >= 0 {
 		categoryName := s.getCellValue(row, indexes.transactionCategory)
 		if categoryName != "" {
-			categories, err := s.categoryRepo.GetList(ctx, int(logined.ID))
+			categories, err := s.categoryRepo.GetList(ctx, logined.ID)
 			if err == nil {
 				for _, cat := range categories {
 					if strings.EqualFold(cat.Name, categoryName) {
@@ -259,10 +224,7 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 				}
 				// Если категория не найдена, создаем её
 				if categoryID == 0 {
-					catType := model.TransactionTypeExpanse
-					if transactionType == model.TransactionTypeIncome {
-						catType = model.TransactionTypeIncome
-					}
+					catType := model.CategoryTypeExpense
 					newCatID, err := s.categoryRepo.Create(ctx, model.CreateCategoryRecord{
 						UserID:    logined.ID,
 						Name:      categoryName,
@@ -279,7 +241,7 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 
 	// Если категория не указана, используем первую доступную категорию расходов/доходов
 	if categoryID == 0 {
-		categories, err := s.categoryRepo.GetListByType(ctx, int(logined.ID), transactionType)
+		categories, err := s.categoryRepo.GetListByType(ctx, logined.ID, model.CategoryTypeExpense)
 		if err == nil && len(categories) > 0 {
 			categoryID = categories[0].ID
 		}
@@ -287,11 +249,10 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 
 	transaction := model.Transaction{
 		UserID:      logined.ID,
-		CategoryID:  categoryID,
+		CategoryID:  &categoryID,
 		Description: description,
 		Amount:      amount,
-		Type:        transactionType,
-		DateTime:    dateTime,
+		Date:        dateTime,
 		CreatedAt:   time.Now(),
 	}
 
@@ -310,7 +271,7 @@ func (s *ImportService) importCategory(ctx context.Context, logined model.User, 
 	}
 
 	// Проверяем, не существует ли уже такая категория
-	categories, err := s.categoryRepo.GetList(ctx, int(logined.ID))
+	categories, err := s.categoryRepo.GetList(ctx, logined.ID)
 	if err == nil {
 		for _, cat := range categories {
 			if strings.EqualFold(cat.Name, name) {
@@ -320,18 +281,9 @@ func (s *ImportService) importCategory(ctx context.Context, logined model.User, 
 		}
 	}
 
-	catType := model.TransactionTypeExpanse
-	if indexes.categoryType >= 0 {
-		typeStr := strings.ToLower(s.getCellValue(row, indexes.categoryType))
-		if strings.Contains(typeStr, "доход") || strings.Contains(typeStr, "income") || typeStr == "0" {
-			catType = model.TransactionTypeIncome
-		}
-	}
-
 	_, err = s.categoryRepo.Create(ctx, model.CreateCategoryRecord{
 		UserID:    logined.ID,
 		Name:      name,
-		Type:      catType,
 		CreatedAt: time.Now(),
 	})
 
@@ -339,100 +291,6 @@ func (s *ImportService) importCategory(ctx context.Context, logined model.User, 
 		return false, err
 	}
 	return true, nil
-}
-
-func (s *ImportService) importPrescribedExpanse(ctx context.Context, logined model.User, row []string, indexes columnIndexes, mapping model.ExcelColumnMapping) error {
-	// Сумма обязательна для обязательной траты
-	if indexes.prescribedExpanseAmount < 0 {
-		return errors.New("не указан столбец для суммы обязательной траты")
-	}
-
-	amountStr := s.getCellValue(row, indexes.prescribedExpanseAmount)
-	if amountStr == "" {
-		return errors.New("сумма обязательной траты не может быть пустой")
-	}
-
-	amount, err := tryParseAmount(amountStr)
-	if err != nil {
-		return fmt.Errorf("неверный формат суммы: %v", err)
-	}
-
-	description := s.getCellValue(row, indexes.prescribedExpanseDescription)
-	if description == "" {
-		description = "Импортированная обязательная трата"
-	}
-
-	frequency := model.FrequencyTypeMonthly
-	if indexes.prescribedExpanseFrequency >= 0 {
-		freqStr := strings.ToLower(s.getCellValue(row, indexes.prescribedExpanseFrequency))
-		if strings.Contains(freqStr, "ежедневно") || strings.Contains(freqStr, "daily") || freqStr == "1" {
-			frequency = model.FrequencyTypeDaily
-		} else if strings.Contains(freqStr, "еженедельно") || strings.Contains(freqStr, "weekly") || freqStr == "2" {
-			frequency = model.FrequencyTypeWeekly
-		} else if strings.Contains(freqStr, "ежеквартально") || strings.Contains(freqStr, "quarterly") || freqStr == "3" {
-			frequency = model.FrequencyTypeQuarterly
-		}
-	}
-
-	dateTime := time.Now()
-	if indexes.prescribedExpanseDate >= 0 {
-		dateStr := s.getCellValue(row, indexes.prescribedExpanseDate)
-		if dateStr != "" {
-			parsedDate, err := s.parseDate(dateStr)
-			if err == nil {
-				dateTime = parsedDate
-			}
-		}
-	}
-
-	var categoryID uint64 = 0
-	if indexes.prescribedExpanseCategory >= 0 {
-		categoryName := s.getCellValue(row, indexes.prescribedExpanseCategory)
-		if categoryName != "" {
-			categories, err := s.categoryRepo.GetList(ctx, int(logined.ID))
-			if err == nil {
-				for _, cat := range categories {
-					if strings.EqualFold(cat.Name, categoryName) {
-						categoryID = cat.ID
-						break
-					}
-				}
-				// Если категория не найдена, создаем её
-				if categoryID == 0 {
-					newCatID, err := s.categoryRepo.Create(ctx, model.CreateCategoryRecord{
-						UserID:    logined.ID,
-						Name:      categoryName,
-						Type:      model.TransactionTypeExpanse,
-						CreatedAt: time.Now(),
-					})
-					if err == nil {
-						categoryID = uint64(newCatID)
-					}
-				}
-			}
-		}
-	}
-
-	// Если категория не указана, используем первую доступную категорию расходов
-	if categoryID == 0 {
-		categories, err := s.categoryRepo.GetListByType(ctx, int(logined.ID), model.TransactionTypeExpanse)
-		if err == nil && len(categories) > 0 {
-			categoryID = categories[0].ID
-		}
-	}
-
-	prescribedExpanse := model.CreatePrescribedExpanseRecord{
-		UserID:      logined.ID,
-		CategoryID:  categoryID,
-		Description: description,
-		Frequency:   frequency,
-		Amount:      amount,
-		DateTime:    dateTime,
-		CreatedAt:   time.Now(),
-	}
-
-	_, err = s.prescribedExpanseRepo.Create(ctx, prescribedExpanse)
-	return err
 }
 
 func (s *ImportService) parseDate(dateStr string) (time.Time, error) {

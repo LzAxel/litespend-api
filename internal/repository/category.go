@@ -82,7 +82,7 @@ func (r CategoryRepositoryPostgres) GetByID(ctx context.Context, id int) (model.
 	return category, nil
 }
 
-func (r CategoryRepositoryPostgres) GetList(ctx context.Context, userID int) ([]model.TransactionCategory, error) {
+func (r CategoryRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.TransactionCategory, error) {
 	var categories []model.TransactionCategory = make([]model.TransactionCategory, 0)
 
 	err := r.db.SelectContext(ctx, &categories, `SELECT * FROM transaction_categories WHERE user_id = $1 ORDER BY name`, userID)
@@ -93,7 +93,7 @@ func (r CategoryRepositoryPostgres) GetList(ctx context.Context, userID int) ([]
 	return categories, nil
 }
 
-func (r CategoryRepositoryPostgres) GetListByType(ctx context.Context, userID int, categoryType model.TransactionType) ([]model.TransactionCategory, error) {
+func (r CategoryRepositoryPostgres) GetListByType(ctx context.Context, userID uint64, categoryType model.CategoryType) ([]model.TransactionCategory, error) {
 	var categories []model.TransactionCategory = make([]model.TransactionCategory, 0)
 
 	err := r.db.SelectContext(ctx, &categories, `SELECT * FROM transaction_categories WHERE user_id = $1 AND type = $2 ORDER BY name`, userID, categoryType)

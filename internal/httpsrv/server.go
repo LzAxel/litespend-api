@@ -84,19 +84,6 @@ func (s *Server) setup() {
 			categories.DELETE("/:id", s.router.Category.DeleteCategory)
 		}
 
-		prescribedExpanses := apiv1.Group("/prescribed-expanses")
-		prescribedExpanses.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
-		{
-			prescribedExpanses.POST("", s.router.PrescribedExpanse.CreatePrescribedExpanse)
-			prescribedExpanses.GET("", s.router.PrescribedExpanse.GetPrescribedExpanses)
-			prescribedExpanses.GET("/with-payment-status", s.router.PrescribedExpanse.GetPrescribedExpansesWithPaymentStatus)
-			prescribedExpanses.POST("/:id/mark-as-paid", s.router.PrescribedExpanse.MarkAsPaid)
-			prescribedExpanses.POST("/:id/mark-as-paid-partial", s.router.PrescribedExpanse.MarkAsPaidPartial)
-			prescribedExpanses.GET("/:id", s.router.PrescribedExpanse.GetPrescribedExpanse)
-			prescribedExpanses.PUT("/:id", s.router.PrescribedExpanse.UpdatePrescribedExpanse)
-			prescribedExpanses.DELETE("/:id", s.router.PrescribedExpanse.DeletePrescribedExpanse)
-		}
-
 		imports := apiv1.Group("/import")
 		imports.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
 		{

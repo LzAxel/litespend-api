@@ -88,7 +88,7 @@ func (s *CategoryService) GetByID(ctx context.Context, logined model.User, id in
 }
 
 func (s *CategoryService) GetList(ctx context.Context, logined model.User) ([]model.TransactionCategory, error) {
-	categories, err := s.repo.GetList(ctx, int(logined.ID))
+	categories, err := s.repo.GetList(ctx, logined.ID)
 	if err != nil {
 		return categories, err
 	}
@@ -96,8 +96,8 @@ func (s *CategoryService) GetList(ctx context.Context, logined model.User) ([]mo
 	return categories, nil
 }
 
-func (s *CategoryService) GetListByType(ctx context.Context, logined model.User, categoryType model.TransactionType) ([]model.TransactionCategory, error) {
-	categories, err := s.repo.GetListByType(ctx, int(logined.ID), categoryType)
+func (s *CategoryService) GetListByType(ctx context.Context, logined model.User, categoryType model.CategoryType) ([]model.TransactionCategory, error) {
+	categories, err := s.repo.GetListByType(ctx, logined.ID, categoryType)
 	if err != nil {
 		return categories, err
 	}

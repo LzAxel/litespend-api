@@ -157,7 +157,7 @@ func (r *CategoryRouter) GetCategories(c *gin.Context) {
 			return
 		}
 
-		categories, err := r.service.Category.GetListByType(c.Request.Context(), logined, model.TransactionType(typeInt))
+		categories, err := r.service.Category.GetListByType(c.Request.Context(), logined, model.CategoryType(typeInt))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

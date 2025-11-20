@@ -57,6 +57,7 @@ export function TransactionsPage() {
       setHasMore(pageNum < response.data.meta.total_pages);
       setPage(pageNum);
     } catch (error) {
+      setHasMore(false);
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);

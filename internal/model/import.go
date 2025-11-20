@@ -11,13 +11,6 @@ type ExcelColumnMapping struct {
 	// Категории
 	CategoryName *string `json:"category_name,omitempty"` // столбец для названия категории
 	CategoryType *string `json:"category_type,omitempty"` // столбец для типа категории
-
-	// Обязательные траты
-	PrescribedExpanseDescription string  `json:"prescribed_expanse_description,omitempty"` // столбец для описания обязательной траты
-	PrescribedExpanseAmount      *string `json:"prescribed_expanse_amount,omitempty"`      // столбец для суммы обязательной траты
-	PrescribedExpanseFrequency   *string `json:"prescribed_expanse_frequency,omitempty"`   // столбец для частоты обязательной траты
-	PrescribedExpanseDate        *string `json:"prescribed_expanse_date,omitempty"`        // столбец для даты обязательной траты
-	PrescribedExpanseCategory    *string `json:"prescribed_expanse_category,omitempty"`    // столбец для категории обязательной траты
 }
 
 type ExcelFileStructure struct {
@@ -30,8 +23,7 @@ type ImportRequest struct {
 }
 
 type ImportResult struct {
-	TransactionsCreated       int      `json:"transactions_created"`
-	CategoriesCreated         int      `json:"categories_created"`
-	PrescribedExpansesCreated int      `json:"prescribed_expanses_created"`
-	Errors                    []string `json:"errors,omitempty"`
+	TransactionsCreated int      `json:"transactions_created"`
+	CategoriesCreated   int      `json:"categories_created"`
+	Errors              []string `json:"errors,omitempty"`
 }
