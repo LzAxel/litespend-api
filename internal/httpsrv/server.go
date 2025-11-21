@@ -84,6 +84,17 @@ func (s *Server) setup() {
 			categories.DELETE("/:id", s.router.Category.DeleteCategory)
 		}
 
+		budgets := apiv1.Group("/budgets")
+		budgets.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		{
+			budgets.POST("", s.router.Budget.CreateBudget)
+			budgets.GET("", s.router.Budget.GetBudgets)
+			budgets.GET("/period", s.router.Budget.GetBudgetsByPeriod)
+			budgets.GET("/:id", s.router.Budget.GetBudget)
+			budgets.PUT("/:id", s.router.Budget.UpdateBudget)
+			budgets.DELETE("/:id", s.router.Budget.DeleteBudget)
+		}
+
 		imports := apiv1.Group("/import")
 		imports.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
 		{

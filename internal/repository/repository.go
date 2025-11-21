@@ -36,10 +36,20 @@ type CategoryRepository interface {
 	GetListByType(ctx context.Context, userID uint64, categoryType model.CategoryType) ([]model.TransactionCategory, error)
 }
 
+type BudgetRepository interface {
+	Create(ctx context.Context, record model.CreateBudgetRecord) (int, error)
+	Update(ctx context.Context, id int, dto model.UpdateBudgetRequest) error
+	Delete(ctx context.Context, id int) error
+	GetByID(ctx context.Context, id int) (model.Budget, error)
+	GetList(ctx context.Context, userID uint64) ([]model.Budget, error)
+	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.Budget, error)
+}
+
 type Repository struct {
 	UserRepository        UserRepository
 	TransactionRepository TransactionRepository
 	CategoryRepository    CategoryRepository
+	BudgetRepository      BudgetRepository
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
@@ -47,5 +57,6 @@ func NewRepository(db *sqlx.DB) *Repository {
 		UserRepository:        NewUserRepositoryPostgres(db),
 		TransactionRepository: NewTransactionRepositoryPostgres(db),
 		CategoryRepository:    NewCategoryRepositoryPostgres(db),
+		BudgetRepository:      NewBudgetRepositoryPostgres(db),
 	}
 }

@@ -15,6 +15,29 @@ type Budget struct {
 	CreatedAt  time.Time       `json:"created_at" db:"created_at"`
 }
 
+type CreateBudgetRecord struct {
+	UserID     uint64          `json:"user_id"`
+	CategoryID uint64          `json:"category_id"`
+	Year       uint            `json:"year"`
+	Month      uint            `json:"month"`
+	Budgeted   decimal.Decimal `json:"budgeted"`
+	CreatedAt  time.Time       `json:"created_at"`
+}
+
+type UpdateBudgetRequest struct {
+	CategoryID *uint64          `json:"category_id,omitempty"`
+	Year       *uint            `json:"year,omitempty"`
+	Month      *uint            `json:"month,omitempty"`
+	Budgeted   *decimal.Decimal `json:"budgeted,omitempty"`
+}
+
+type CreateBudgetRequest struct {
+	CategoryID uint64          `json:"category_id" binding:"required"`
+	Year       uint            `json:"year" binding:"required"`
+	Month      uint            `json:"month" binding:"required"`
+	Budgeted   decimal.Decimal `json:"budgeted" binding:"required"`
+}
+
 type BudgetAllocationRequest struct {
 	CategoryID uint64          `json:"category_id" binding:"required"`
 	Year       uint            `json:"year" binding:"required"`

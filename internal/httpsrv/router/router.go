@@ -9,6 +9,7 @@ type Router struct {
 	User        *UserRouter
 	Transaction *TransactionRouter
 	Category    *CategoryRouter
+	Budget      *BudgetRouter
 	Auth        *AuthRouter
 	Import      *ImportRouter
 }
@@ -18,6 +19,7 @@ func NewRouter(service *service.Service, sessionManager *session.SessionManager)
 		User:        NewUserRouter(service, sessionManager),
 		Transaction: NewTransactionRouter(service),
 		Category:    NewCategoryRouter(service),
+		Budget:      NewBudgetRouter(service),
 		Auth:        NewAuthRouter(service),
 		Import:      NewImportRouter(service),
 	}
