@@ -107,7 +107,7 @@ export function PrescribedExpanseList({
                                             <span>{frequencyLabels[prescribedExpanse.frequency]}</span>
                                             <span className="mx-2">•</span>
                                             <span>
-                        {format(new Date(prescribedExpanse.date_time), 'dd.MM.yyyy', {
+                        {format(new Date(prescribedExpanse.date), 'dd.MM.yyyy', {
                             locale: ru,
                         })}
                       </span>

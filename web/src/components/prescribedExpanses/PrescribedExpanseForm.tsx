@@ -21,8 +21,8 @@ export function PrescribedExpanseForm({ prescribedExpanse, onClose, onSuccess }:
     description: prescribedExpanse?.description || '',
     frequency: (prescribedExpanse?.frequency ?? 0) as FrequencyType,
     amount: prescribedExpanse?.amount || '',
-    date_time: prescribedExpanse
-      ? new Date(prescribedExpanse.date_time).toISOString().slice(0, 16)
+    date: prescribedExpanse
+      ? new Date(prescribedExpanse.date).toISOString().slice(0, 16)
       : new Date().toISOString().slice(0, 16),
   });
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ export function PrescribedExpanseForm({ prescribedExpanse, onClose, onSuccess }:
     try {
       const data = {
         ...formData,
-        date_time: new Date(formData.date_time).toISOString(),
+        date: new Date(formData.date).toISOString(),
       };
       if (prescribedExpanse) {
         await prescribedExpansesApi.update(prescribedExpanse.id, data);
@@ -143,8 +143,8 @@ export function PrescribedExpanseForm({ prescribedExpanse, onClose, onSuccess }:
             <label className="block text-sm font-medium text-gray-700 mb-1">Дата начала</label>
             <input
               type="datetime-local"
-              value={formData.date_time}
-              onChange={(e) => setFormData({ ...formData, date_time: e.target.value })}
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               required
             />

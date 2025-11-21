@@ -12,7 +12,7 @@ CREATE TABLE transaction_categories
     id         BIGSERIAL PRIMARY KEY UNIQUE,
     user_id    BIGINT REFERENCES users (id) NOT NULL,
     name       VARCHAR(255)                 NOT NULL,
-    type       SMALLINT                     NOT NULL CHECK (type IN (1, 2)) NOT NULL,
+    type       SMALLINT                     NOT NULL CHECK (type IN (0, 1)) NOT NULL,
     created_at TIMESTAMP                    NOT NULL,
     UNIQUE (user_id, name, type)
 );

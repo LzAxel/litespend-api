@@ -26,30 +26,24 @@ export interface Transaction {
   id: number;
   user_id: number;
   category_id: number;
-  goal_id?: number;
   description: string;
   amount: string;
-  type: TransactionType;
-  date_time: string;
+  date: string;
   created_at: string;
 }
 
 export interface CreateTransactionRequest {
   category_id: number;
-  goal_id?: number;
   description: string;
   amount: string;
-  type: TransactionType;
-  date_time: string;
+  date: string;
 }
 
 export interface UpdateTransactionRequest {
   category_id?: number;
-  goal_id?: number;
   description?: string;
   amount?: string;
-  type?: TransactionType;
-  date_time?: string;
+  date?: string;
 }
 
 export interface Category {
@@ -182,7 +176,7 @@ export interface PrescribedExpanse {
   description: string;
   frequency: FrequencyType;
   amount: string;
-  date_time: string;
+  date: string;
   created_at: string;
 }
 
@@ -197,7 +191,7 @@ export interface CreatePrescribedExpanseRequest {
   description: string;
   frequency: FrequencyType;
   amount: string;
-  date_time: string;
+  date: string;
 }
 
 export interface UpdatePrescribedExpanseRequest {
@@ -205,7 +199,7 @@ export interface UpdatePrescribedExpanseRequest {
   description?: string;
   frequency?: FrequencyType;
   amount?: string;
-  date_time?: string;
+  date?: string;
 }
 
 export const prescribedExpansesApi = {

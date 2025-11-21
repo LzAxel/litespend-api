@@ -40,7 +40,7 @@ export function TransactionList({
                                         <span>{getCategoryName(transaction.category_id)}</span>
                                         <span className="mx-2">•</span>
                                         <span>
-                      {format(new Date(transaction.date_time), 'dd.MM.yyyy HH:mm', {
+                      {format(new Date(transaction.date), 'dd.MM.yyyy HH:mm', {
                           locale: ru,
                       })}
                     </span>

@@ -5,8 +5,8 @@ import "time"
 type CategoryType uint8
 
 const (
-	CategoryTypeIncome  CategoryType = 1
-	CategoryTypeExpense CategoryType = 2
+	CategoryTypeIncome  CategoryType = 0
+	CategoryTypeExpense CategoryType = 1
 )
 
 type TransactionCategory struct {
