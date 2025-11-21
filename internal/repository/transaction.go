@@ -257,7 +257,7 @@ func (r TransactionRepositoryPostgres) GetCategoryStatistics(ctx context.Context
 			COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0)::float as income,
 			COALESCE(SUM(CASE WHEN t.amount < 0 THEN ABS(t.amount) ELSE 0 END), 0)::float as expense
 		FROM transactions t
-		LEFT JOIN categories c ON t.category_id = c.id
+		LEFT JOIN transaction_categories c ON t.category_id = c.id
 		WHERE t.user_id = $1
 	`, periodFormat, periodCharFormat)
 

@@ -269,3 +269,37 @@ export const importApi = {
   },
 };
 
+// Budgets
+export interface Budget {
+  id: number;
+  user_id: number;
+  category_id: number;
+  year: number;
+  month: number;
+  budgeted: string;
+  created_at: string;
+}
+
+export interface CreateBudgetRequest {
+  category_id: number;
+  year: number;
+  month: number;
+  budgeted: string;
+}
+
+export interface UpdateBudgetRequest {
+  category_id?: number;
+  year?: number;
+  month?: number;
+  budgeted?: string;
+}
+
+export const budgetsApi = {
+  create: (data: CreateBudgetRequest) => api.post<{ id: number }>('/budgets', data),
+  update: (id: number, data: UpdateBudgetRequest) => api.put(`/budgets/${id}`, data),
+  delete: (id: number) => api.delete(`/budgets/${id}`),
+  getById: (id: number) => api.get<Budget>(`/budgets/${id}`),
+  getAll: () => api.get<Budget[]>('/budgets'),
+  getByPeriod: (year: number, month: number) => api.get<Budget[]>(`/budgets/period`, { params: { year, month } }),
+};
+
