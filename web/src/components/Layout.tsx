@@ -2,6 +2,9 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { useState, useMemo } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Menu, ReceiptText, Folder, ListChecks, Wallet, Upload, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,9 +13,22 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const router = useRouterState();
   const { isAuthenticated, setAuthenticated } = useAuthStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const currentPath = router.location.pathname;
   const isAuthPage = currentPath === '/login' || currentPath === '/register';
+
+  const navItems = useMemo(
+    () => [
+      { to: '/transactions', label: 'Транзакции', icon: ReceiptText },
+      { to: '/categories', label: 'Категории', icon: Folder },
+      { to: '/prescribed-expanses', label: 'Обязательные траты', icon: ListChecks },
+      { to: '/budgets', label: 'Бюджеты', icon: Wallet },
+      { to: '/import', label: 'Импорт', icon: Upload },
+      { to: '/statistics', label: 'Статистика', icon: BarChart3 },
+    ],
+    []
+  );
 
   const handleLogout = async () => {
     try {
@@ -30,94 +46,70 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex gap-6">
+      <div className="flex min-h-screen">
+        <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-white md:sticky md:top-0 md:h-screen">
+          <div className="p-4 text-lg font-semibold">LiteSpend</div>
+          <nav className="flex-1 px-2 py-2 space-y-1">
+            {navItems.map((item) => (
               <Link
-                to="/transactions"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
+                key={item.to}
+                to={item.to}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm"
+                activeProps={{ className: 'bg-blue-50 text-blue-700' }}
+                inactiveProps={{ className: 'text-gray-700 hover:bg-gray-50' }}
               >
-                Транзакции
+                <item.icon className="h-4 w-4" />
+                <span>{item.label}</span>
               </Link>
-              <Link
-                to="/categories"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
-              >
-                Категории
-              </Link>
-              <Link
-                to="/prescribed-expanses"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
-              >
-                Обязательные траты
-              </Link>
-              <Link
-                to="/budgets"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
-              >
-                Бюджеты
-              </Link>
-              <Link
-                to="/import"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
-              >
-                Импорт
-              </Link>
-              <Link
-                to="/statistics"
-                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                activeProps={{
-                  className: 'border-blue-500 text-gray-900',
-                }}
-                inactiveProps={{
-                  className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                }}
-              >
-                Статистика
-              </Link>
-            </div>
-            <div className="flex items-center">
+            ))}
+          </nav>
+          <div className="p-4 border-t">
+            {isAuthenticated && (
+              <Button variant="outline" onClick={handleLogout} className="w-full">Выход</Button>
+            )}
+          </div>
+        </aside>
+
+        <div className="flex-1 flex flex-col">
+          <header className="flex items-center justify-between h-14 border-b bg-white px-4 md:px-6 md:hidden">
+            <Button variant="outline" size="icon" onClick={() => setMobileOpen(true)} aria-label="Меню">
+              <Menu className="h-5 w-5" />
+            </Button>
+            {isAuthenticated && (
+              <Button variant="outline" onClick={handleLogout}>Выход</Button>
+            )}
+          </header>
+          <main className="p-4 sm:p-6 lg:p-8 md:ml-0">{children}</main>
+        </div>
+      </div>
+
+      <Dialog open={mobileOpen} onOpenChange={(o) => !o && setMobileOpen(false)}>
+        <DialogContent className="p-0 w-[280px] h-full fixed left-0 top-0 rounded-none">
+          <div className="flex flex-col h-full">
+            <div className="p-4 text-lg font-semibold border-b">LiteSpend</div>
+            <nav className="flex-1 px-2 py-2 space-y-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm"
+                  activeProps={{ className: 'bg-blue-50 text-blue-700' }}
+                  inactiveProps={{ className: 'text-gray-700 hover:bg-gray-50' }}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+            <div className="p-4 border-t">
               {isAuthenticated && (
-                <Button variant="outline" onClick={handleLogout}>
-                  Выход
-                </Button>
+                <Button variant="outline" onClick={handleLogout} className="w-full">Выход</Button>
               )}
             </div>
           </div>
-        </div>
-      </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

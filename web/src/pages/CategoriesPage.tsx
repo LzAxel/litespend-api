@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { categoriesApi, type Category } from '@/lib/api';
 import { CategoryForm } from '@/components/categories/CategoryForm';
 import { CategoryList } from '@/components/categories/CategoryList';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [toDelete, setToDelete] = useState<Category | null>(null);
 
   useEffect(() => {
     loadCategories();
@@ -36,7 +39,6 @@ export function CategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Удалить категорию?')) return;
     try {
       await categoriesApi.delete(id);
       loadCategories();
@@ -63,24 +65,46 @@ export function CategoriesPage() {
     <div className="px-4 py-6 sm:px-0">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Категории</h1>
-        <button
-          onClick={handleCreate}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Добавить категорию
-        </button>
+        <Button onClick={handleCreate}>Добавить категорию</Button>
       </div>
 
-      {showForm && (
-        <CategoryForm
-          category={editingCategory}
-          onClose={handleFormClose}
-          onSuccess={handleFormSuccess}
-        />
-      )}
+      <Dialog open={showForm} onOpenChange={(o) => !o && handleFormClose()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Редактировать категорию' : 'Добавить категорию'}</DialogTitle>
+          </DialogHeader>
+          <CategoryForm category={editingCategory} onClose={handleFormClose} onSuccess={handleFormSuccess} />
+        </DialogContent>
+      </Dialog>
 
-      <CategoryList categories={categories} onEdit={handleEdit} onDelete={handleDelete} />
+      <CategoryList
+        categories={categories}
+        onEdit={handleEdit}
+        onDelete={(id) => setToDelete(categories.find((c) => c.id === id) || null)}
+      />
+
+      <Dialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Удалить категорию?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">Действие нельзя отменить.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setToDelete(null)}>Отмена</Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (toDelete) {
+                  await handleDelete(toDelete.id);
+                  setToDelete(null);
+                }
+              }}
+            >
+              Удалить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

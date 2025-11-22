@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { transactionsApi, type Transaction, type Category } from '@/lib/api';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface TransactionFormProps {
   transaction?: Transaction | null;
@@ -53,101 +56,58 @@ export function TransactionForm({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
-            {transaction ? 'Редактировать транзакцию' : 'Добавить транзакцию'}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✕
-          </button>
+    <div>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-md text-sm">{error}</div>
+      )}
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label className="mb-1" htmlFor="category">Категория</Label>
+          <select
+            id="category"
+            value={formData.category_id}
+            onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
+            className="mt-1 block w-full border rounded p-2"
+            required
+            disabled={filteredCategories.length === 0}
+          >
+            {filteredCategories.length === 0 ? (
+              <option value={0}>Нет доступных категорий</option>
+            ) : (
+              filteredCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))
+            )}
+          </select>
+          {filteredCategories.length === 0 && (
+            <p className="mt-1 text-sm text-yellow-600">
+              Создайте категорию для {+formData.amount > 0 ? 'доходов' : 'расходов'}
+            </p>
+          )}
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-md text-sm">{error}</div>
-        )}
+        <div>
+          <Label className="mb-1" htmlFor="description">Описание</Label>
+          <Input id="description" type="text" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-            <select
-              value={formData.category_id}
-              onChange={(e) =>
-                setFormData({ ...formData, category_id: Number(e.target.value) })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              required
-              disabled={filteredCategories.length === 0}
-            >
-              {filteredCategories.length === 0 ? (
-                <option value={0}>Нет доступных категорий</option>
-              ) : (
-                filteredCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))
-              )}
-            </select>
-            {filteredCategories.length === 0 && (
-              <p className="mt-1 text-sm text-yellow-600">
-                Создайте категорию для {+formData.amount > 0 ? 'доходов' : 'расходов'}
-              </p>
-            )}
-          </div>
+        <div>
+          <Label className="mb-1" htmlFor="amount">Сумма</Label>
+          <Input id="amount" type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+        <div>
+          <Label className="mb-1" htmlFor="date">Дата и время</Label>
+          <Input id="date" type="datetime-local" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата и время</label>
-            <input
-              type="datetime-local"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Сохранение...' : 'Сохранить'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-2 mt-2">
+          <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
+          <Button type="submit" disabled={loading}>{loading ? 'Сохранение...' : 'Сохранить'}</Button>
+        </div>
+      </form>
     </div>
   );
 }

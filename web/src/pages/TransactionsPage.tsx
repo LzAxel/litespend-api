@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { transactionsApi, categoriesApi, type Transaction, type Category, type SortField, type SortOrder } from '@/lib/api';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -13,6 +16,7 @@ export function TransactionsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [toDelete, setToDelete] = useState<Transaction | null>(null);
   const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [search, setSearch] = useState('');
@@ -105,7 +109,6 @@ export function TransactionsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Удалить транзакцию?')) return;
     try {
       await transactionsApi.delete(id);
       // Перезагружаем с первой страницы
@@ -160,43 +163,32 @@ export function TransactionsPage() {
     <div className="px-4 py-6 sm:px-0">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Транзакции</h1>
-        <button
-          onClick={handleCreate}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Добавить транзакцию
-        </button>
+        <Button onClick={handleCreate}>Добавить транзакцию</Button>
       </div>
 
       {/* Поиск и сортировка */}
       <div className="mb-6 space-y-4">
         <div className="flex gap-4">
           <div className="flex-1">
-            <input
+            <Input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              onKeyPress={handleSearchKeyPress}
+              onKeyDown={handleSearchKeyPress}
               placeholder="Поиск по названию..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            Найти
-          </button>
+          <Button onClick={handleSearch} variant="secondary">Найти</Button>
           {search && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => {
                 setSearchInput('');
                 setSearch('');
               }}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
             >
               Сбросить
-            </button>
+            </Button>
           )}
         </div>
 
@@ -246,20 +238,25 @@ export function TransactionsPage() {
         </div>
       </div>
 
-      {showForm && (
-        <TransactionForm
-          transaction={editingTransaction}
-          categories={categories}
-          onClose={handleFormClose}
-          onSuccess={handleFormSuccess}
-        />
-      )}
+      <Dialog open={showForm} onOpenChange={(o) => !o && handleFormClose()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTransaction ? 'Редактировать транзакцию' : 'Добавить транзакцию'}</DialogTitle>
+          </DialogHeader>
+          <TransactionForm
+            transaction={editingTransaction}
+            categories={categories}
+            onClose={handleFormClose}
+            onSuccess={handleFormSuccess}
+          />
+        </DialogContent>
+      </Dialog>
 
       <TransactionList
         transactions={transactions}
         categories={categories}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={(id) => setToDelete(transactions.find((t) => t.id === id) || null)}
       />
 
       {/* Индикатор загрузки и триггер для бесконечной подгрузки */}
@@ -269,6 +266,29 @@ export function TransactionsPage() {
           <div className="text-gray-500">Все транзакции загружены</div>
         )}
       </div>
+
+      <Dialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Удалить транзакцию?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">Действие нельзя отменить.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setToDelete(null)}>Отмена</Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (toDelete) {
+                  await handleDelete(toDelete.id);
+                  setToDelete(null);
+                }
+              }}
+            >
+              Удалить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
