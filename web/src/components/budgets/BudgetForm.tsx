@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { budgetsApi, categoriesApi, type BudgetDetailed, type CreateBudgetRequest, type UpdateBudgetRequest, type Category } from '@/lib/api';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface BudgetFormProps {
   budget?: BudgetDetailed | null;
@@ -65,41 +68,39 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
   };
 
   return (
-    <div className="bg-white shadow sm:rounded-lg p-4 mb-6">
-      <h2 className="text-xl font-semibold mb-4">{budget ? 'Редактировать бюджет' : 'Создать бюджет'}</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Категория</label>
-          <select name="category_id" value={form.category_id} onChange={handleChange} className="mt-1 block w-full border rounded p-2">
-            <option value="">—</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Год</label>
-          <input type="number" name="year" value={form.year} onChange={handleChange} className="mt-1 block w-full border rounded p-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Месяц</label>
-          <input type="number" name="month" value={form.month} onChange={handleChange} className="mt-1 block w-full border rounded p-2" min={1} max={12} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Сумма</label>
-          <input type="number" step="0.01" name="budgeted" value={form.budgeted} onChange={handleChange} className="mt-1 block w-full border rounded p-2" />
-        </div>
-        <div className="md:col-span-4 flex gap-2">
-          <button type="submit" disabled={submitting} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            {submitting ? 'Сохранение...' : 'Сохранить'}
-          </button>
-          <button type="button" onClick={onClose} className="px-4 py-2 border rounded">
-            Отмена
-          </button>
-        </div>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <Label htmlFor="category_id">Категория</Label>
+        <select id="category_id" name="category_id" value={form.category_id} onChange={handleChange} className="mt-1 block w-full border rounded p-2">
+          <option value="">—</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <Label htmlFor="year">Год</Label>
+        <Input type="number" id="year" name="year" value={form.year as number} onChange={handleChange} className="mt-1" />
+      </div>
+      <div>
+        <Label htmlFor="month">Месяц</Label>
+        <Input type="number" id="month" name="month" value={form.month as number} onChange={handleChange} className="mt-1" min={1} max={12} />
+      </div>
+      <div>
+        <Label htmlFor="budgeted">Сумма</Label>
+        <Input type="number" step="0.01" id="budgeted" name="budgeted" value={form.budgeted} onChange={handleChange} className="mt-1" />
+      </div>
+      <div className="md:col-span-4 flex flex-col-reverse sm:flex-row gap-2 mt-2">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Отмена
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Сохранение...' : 'Сохранить'}
+        </Button>
+      </div>
+    </form>
   );
 }
+
