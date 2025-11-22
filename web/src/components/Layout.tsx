@@ -12,7 +12,7 @@ interface LayoutProps {
 
 export function Layout({children}: LayoutProps) {
     const router = useRouterState();
-    const {isAuthenticated, setAuthenticated} = useAuthStore();
+    const {setAuthenticated} = useAuthStore();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window === 'undefined') return 'light';
