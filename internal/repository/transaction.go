@@ -168,56 +168,60 @@ func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, use
 	return transactions, total, nil
 }
 
-func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context, userID uint64) (model.CurrentBalanceStatistics, error) {
+func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context, userID uint64, year uint, month uint) (model.CurrentBalanceStatistics, error) {
 	var stats model.CurrentBalanceStatistics
 
 	query := `
-WITH vars AS (
-    SELECT $1::bigint AS uid,
-           EXTRACT(YEAR FROM CURRENT_DATE)::int  AS y,
-           EXTRACT(MONTH FROM CURRENT_DATE)::int AS m
-),
-on_accounts AS (
-    SELECT COALESCE(SUM(amount), 0)::numeric(14,2) AS balance
-    FROM transactions WHERE user_id = (SELECT uid FROM vars)
-),
-unpaid_bills AS (
-    SELECT COALESCE(SUM(amount_expected - amount_paid), 0)::numeric(14,2) AS reserved
-    FROM bill_instances bi
-    JOIN recurring_bills rb ON bi.recurring_bill_id = rb.id
-    WHERE rb.user_id = (SELECT uid FROM vars)
-      AND rb.is_active
-      AND (bi.year > (SELECT y FROM vars) OR (bi.year = (SELECT y FROM vars) AND bi.month >= (SELECT m FROM vars)))
-),
-budgeted_this_month AS (
-    SELECT COALESCE(SUM(budgeted), 0)::numeric(14,2) AS reserved
-    FROM monthly_budgets
-    WHERE user_id = (SELECT uid FROM vars)
-      AND year = (SELECT y FROM vars)
-      AND month = (SELECT m FROM vars)
-)
-SELECT 
-    on_accounts.balance AS on_accounts,
-    unpaid_bills.reserved AS reserved_bills,
-    budgeted_this_month.reserved AS reserved_budgets
-FROM vars, on_accounts, unpaid_bills, budgeted_this_month`
+		WITH 
+		balance AS (
+			SELECT COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)::numeric(14,2) as expanses,
+			COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)::numeric(14,2) as income
+			FROM transactions WHERE user_id = $1
+		),
+		budgets AS (
+			SELECT
+				COALESCE(SUM(b.budgeted), 0)::numeric(14,2) AS reserved,
+				COALESCE(SUM(t.amount), 0)::numeric(14,2) AS spent,
+				(b.budgeted + COALESCE(SUM(t.amount), 0))::numeric::float8 AS remaining
+			FROM budgets b
+			LEFT JOIN transaction_categories c ON c.id = b.category_id
+			LEFT JOIN transactions t 
+				ON t.category_id = b.category_id 
+				AND t.user_id = b.user_id
+				AND DATE_TRUNC('month', t.date) = make_date($2, $3, 1)
+			WHERE 
+				b.user_id = $1
+				AND b.year = $2
+				AND b.month = $3
+			GROUP BY 
+				b.id, b.category_id, c.name, b.budgeted
+		)
+		SELECT 
+			balance.expanses AS total_expanse,
+			balance.income AS total_income,
+			budgets.reserved AS total_reserved,
+			budgets.reserved AS reserved_budgets,
+			balance.income - balance.expanses - budgets.reserved AS free_to_distribute
+		FROM budgets, balance`
 
 	type row struct {
-		OnAccounts     decimal.Decimal `db:"on_accounts"`
-		ReservedBills  decimal.Decimal `db:"reserved_bills"`
-		ReservedBudget decimal.Decimal `db:"reserved_budgets"`
+		TotalExpense     decimal.Decimal `db:"total_expanse"`
+		TotalIncome      decimal.Decimal `db:"total_income"`
+		TotalReserved    decimal.Decimal `db:"total_reserved"`
+		ReservedBudgets  decimal.Decimal `db:"reserved_budgets"`
+		FreeToDistribute decimal.Decimal `db:"free_to_distribute"`
 	}
 
 	var snapshot row
-	if err := r.db.GetContext(ctx, &snapshot, query, userID); err != nil {
+	if err := r.db.GetContext(ctx, &snapshot, query, userID, year, month); err != nil {
 		return stats, err
 	}
 
-	stats.OnAccounts = snapshot.OnAccounts
-	stats.ReservedBills = snapshot.ReservedBills
-	stats.ReservedBudgets = snapshot.ReservedBudget
-	stats.TotalReserved = snapshot.ReservedBills.Add(snapshot.ReservedBudget)
-	stats.FreeToDistribute = snapshot.OnAccounts.Sub(stats.TotalReserved)
+	stats.TotalExpense = snapshot.TotalExpense
+	stats.TotalIncome = snapshot.TotalIncome
+	stats.TotalReserved = snapshot.TotalReserved
+	stats.ReservedBudgets = snapshot.ReservedBudgets
+	stats.FreeToDistribute = snapshot.FreeToDistribute
 
 	return stats, nil
 }

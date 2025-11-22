@@ -36,7 +36,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>
+        <div className="rounded-md border p-3 text-sm bg-[rgb(var(--muted))] border-[rgb(var(--destructive))] text-[rgb(var(--destructive))]">{error}</div>
       )}
       <div className="space-y-4">
         <div>
@@ -72,7 +72,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
 
       <div className="text-center">
-        <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+        <Link to="/register" className="font-medium text-[rgb(var(--primary))] hover:opacity-90">
           Нет аккаунта? Зарегистрироваться
         </Link>
       </div>

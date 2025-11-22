@@ -22,7 +22,7 @@ type TransactionRepository interface {
 	GetByID(ctx context.Context, id int) (model.Transaction, error)
 	GetList(ctx context.Context, userID uint64) ([]model.Transaction, error)
 	GetListPaginated(ctx context.Context, userID uint64, params model.PaginationParams) ([]model.Transaction, int, error)
-	GetBalanceStatistics(ctx context.Context, userID uint64) (model.CurrentBalanceStatistics, error)
+	GetBalanceStatistics(ctx context.Context, userID uint64, year uint, month uint) (model.CurrentBalanceStatistics, error)
 	GetCategoryStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.CategoryStatisticsItem, error)
 	GetPeriodStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.PeriodStatisticsItem, error)
 }

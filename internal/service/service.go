@@ -30,7 +30,7 @@ type Transaction interface {
 	GetByID(ctx context.Context, logined model.User, id int) (model.Transaction, error)
 	GetList(ctx context.Context, logined model.User) ([]model.Transaction, error)
 	GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error)
-	GetBalanceStatistics(ctx context.Context, logined model.User) (model.CurrentBalanceStatistics, error)
+	GetBalanceStatistics(ctx context.Context, logined model.User, year uint, month uint) (model.CurrentBalanceStatistics, error)
 	GetCategoryStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.CategoryStatisticsResponse, error)
 	GetPeriodStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.PeriodStatisticsResponse, error)
 }

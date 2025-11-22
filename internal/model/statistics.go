@@ -14,10 +14,10 @@ const (
 )
 
 type CurrentBalanceStatistics struct {
-	OnAccounts       decimal.Decimal `json:"on_accounts"`
-	ReservedBills    decimal.Decimal `json:"reserved_bills"`
-	ReservedBudgets  decimal.Decimal `json:"reserved_budgets"`
+	TotalExpense     decimal.Decimal `json:"total_expense"`
+	TotalIncome      decimal.Decimal `json:"total_income"`
 	TotalReserved    decimal.Decimal `json:"total_reserved"`
+	ReservedBudgets  decimal.Decimal `json:"reserved_budgets"`
 	FreeToDistribute decimal.Decimal `json:"free_to_distribute"`
 }
 

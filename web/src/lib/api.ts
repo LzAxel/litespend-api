@@ -91,8 +91,9 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CurrentBalanceStatistics {
-  balance: string;
-  free_balance: string;
+  free_to_distribute: string;
+  reserved_budgets: string;
+  total_reserved: string;
   total_income: string;
   total_expense: string;
 }
@@ -146,7 +147,7 @@ export const transactionsApi = {
   update: (id: number, data: UpdateTransactionRequest) =>
     api.put(`/transactions/${id}`, data),
   delete: (id: number) => api.delete(`/transactions/${id}`),
-  getBalanceStatistics: () => api.get<CurrentBalanceStatistics>('/transactions/statistics/balance'),
+  getBalanceStatistics: (year: number, month: number) => api.get<CurrentBalanceStatistics>(`/transactions/statistics/balance?year=${year}&month=${month}`),
   getPeriodStatistics: (period: PeriodType, from?: string, to?: string) =>
     api.get<PeriodStatisticsResponse>('/transactions/statistics/periods', {
       params: { period, from, to },

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
 
 export function BudgetsPage() {
   const now = new Date();
@@ -58,37 +59,42 @@ export function BudgetsPage() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Бюджеты</h1>
-        <div className="flex flex-wrap gap-2 items-end">
-          <div className="flex items-end gap-2">
-            <Button variant="outline" onClick={prevMonth} aria-label="Предыдущий месяц">←</Button>
-            <div>
-              <Label htmlFor="month">Месяц</Label>
-              <select
-                id="month"
-                className="mt-1 block w-40 border rounded p-2"
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-              >
-                {monthNames.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
-                ))}
-              </select>
+      <div className="mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <h1 className="text-2xl sm:text-3xl font-bold">Бюджеты</h1>
+          <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-end justify-between gap-2 sm:col-span-2 md:col-span-1">
+              <Button variant="outline" onClick={prevMonth} aria-label="Предыдущий месяц" className="shrink-0">←</Button>
+              <div className="flex-1 min-w-0 px-1">
+                <Label htmlFor="month" className="text-xs sm:text-sm">Месяц</Label>
+                <select
+                  id="month"
+                  className="mt-1 block w-full border rounded p-2 text-sm"
+                  value={month}
+                  onChange={(e) => setMonth(Number(e.target.value))}
+                >
+                  {monthNames.map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-28 md:w-28 px-1">
+                <Label htmlFor="year" className="text-xs sm:text-sm">Год</Label>
+                <Input
+                  id="year"
+                  type="number"
+                  className="mt-1 w-full"
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                />
+              </div>
+              <Button variant="outline" onClick={nextMonth} aria-label="Следующий месяц" className="shrink-0">→</Button>
             </div>
-            <div>
-              <Label htmlFor="year">Год</Label>
-              <Input
-                id="year"
-                type="number"
-                className="mt-1 w-28"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-              />
-            </div>
-            <Button variant="outline" onClick={nextMonth} aria-label="Следующий месяц">→</Button>
+            <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center justify-center gap-2" aria-label="Добавить бюджет">
+              <Plus className="h-5 w-5 md:hidden" />
+              <span className="hidden md:inline">Добавить</span>
+            </Button>
           </div>
-          <Button onClick={handleCreate}>Добавить</Button>
         </div>
       </div>
 

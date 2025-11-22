@@ -168,7 +168,26 @@ func (r *TransactionRouter) GetBalanceStatistics(c *gin.Context) {
 		return
 	}
 
-	stats, err := r.service.Transaction.GetBalanceStatistics(c.Request.Context(), logined)
+	yearStr := c.Query("year")
+	monthStr := c.Query("month")
+	if yearStr == "" || monthStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "year and month query params are required"})
+		return
+	}
+
+	yearInt, err := strconv.Atoi(yearStr)
+	if err != nil || yearInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid year"})
+		return
+	}
+
+	monthInt, err := strconv.Atoi(monthStr)
+	if err != nil || monthInt < 1 || monthInt > 12 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid month"})
+		return
+	}
+
+	stats, err := r.service.Transaction.GetBalanceStatistics(c.Request.Context(), logined, uint(yearInt), uint(monthInt))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

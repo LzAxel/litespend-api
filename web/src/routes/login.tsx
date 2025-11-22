@@ -9,15 +9,11 @@ function LoginPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Вход в систему
-          </h2>
-        </div>
-        <LoginForm onSuccess={() => navigate({ to: '/transactions' })} />
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-center text-2xl font-semibold text-[rgb(var(--app-fg))]">
+        Вход в систему
+      </h2>
+      <LoginForm onSuccess={() => navigate({ to: '/transactions' })} />
     </div>
   );
 }

@@ -111,8 +111,8 @@ func (s *TransactionService) GetListPaginated(ctx context.Context, logined model
 	return model.NewPaginatedResponse(transactions, total, params), nil
 }
 
-func (s *TransactionService) GetBalanceStatistics(ctx context.Context, logined model.User) (model.CurrentBalanceStatistics, error) {
-	stats, err := s.repo.GetBalanceStatistics(ctx, logined.ID)
+func (s *TransactionService) GetBalanceStatistics(ctx context.Context, logined model.User, year uint, month uint) (model.CurrentBalanceStatistics, error) {
+	stats, err := s.repo.GetBalanceStatistics(ctx, logined.ID, year, month)
 	if err != nil {
 		return model.CurrentBalanceStatistics{}, err
 	}

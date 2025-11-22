@@ -6,25 +6,25 @@ function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) 
 }
 
 function Thead({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('bg-gray-50', className)} {...props} />;
+  return <thead className={cn('bg-[rgb(var(--muted))]', className)} {...props} />;
 }
 
 function Tbody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn('bg-white', className)} {...props} />;
+  return <tbody className={cn('bg-[rgb(var(--card))] text-[rgb(var(--app-fg))]', className)} {...props} />;
 }
 
 function Tfoot({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <tfoot className={cn('bg-gray-50', className)} {...props} />;
+  return <tfoot className={cn('bg-[rgb(var(--muted))]', className)} {...props} />;
 }
 
 function Tr({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('border-b border-gray-200', className)} {...props} />;
+  return <tr className={cn('border-b border-[rgb(var(--border))]', className)} {...props} />;
 }
 
 function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={cn('px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500', className)}
+      className={cn('px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[rgb(var(--muted-foreground))]', className)}
       {...props}
     />
   );

@@ -5,6 +5,7 @@ import { TransactionList } from '@/components/transactions/TransactionList';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
 
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -12,7 +13,6 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -57,7 +57,6 @@ export function TransactionsPage() {
       } else {
         setTransactions((prev) => [...prev, ...response.data.data]);
       }
-      setTotalPages(response.data.meta.total_pages);
       setHasMore(pageNum < response.data.meta.total_pages);
       setPage(pageNum);
     } catch (error) {
@@ -161,9 +160,12 @@ export function TransactionsPage() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Транзакции</h1>
-        <Button onClick={handleCreate}>Добавить транзакцию</Button>
+      <div className="flex justify-between items-center mb-6 gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Транзакции</h1>
+        <Button onClick={handleCreate} className="flex items-center gap-2" aria-label="Добавить транзакцию">
+          <Plus className="h-5 w-5 md:hidden" />
+          <span className="hidden md:inline">Добавить транзакцию</span>
+        </Button>
       </div>
 
       {/* Поиск и сортировка */}

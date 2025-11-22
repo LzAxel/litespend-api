@@ -1,12 +1,12 @@
 import {useEffect, useMemo, useState} from 'react';
 import {type BudgetDetailed, budgetsApi, categoriesApi, type Category} from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Table, Thead, Tbody, Tfoot, Tr, Th, Td } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {Table, Tbody, Td, Tfoot, Th, Thead, Tr} from '@/components/ui/table';
+import {cn, formatCurrency} from '@/lib/utils';
+import {Pencil, Trash2} from 'lucide-react';
+import {Card, CardContent} from '@/components/ui/card';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Badge} from '@/components/ui/badge';
 
 interface BudgetListProps {
     year: number;
@@ -65,25 +65,17 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
         <Card>
             <CardContent className="py-10 text-center">
                 <div className="mb-3 text-lg font-medium">Бюджеты не найдены</div>
-                <div className="text-sm text-gray-600">Создайте первый бюджет с нужными параметрами периода.</div>
+                <div className="text-sm text-[rgb(var(--muted-foreground))]">Создайте первый бюджет с нужными
+                    параметрами периода.
+                </div>
             </CardContent>
         </Card>
     );
 
     return (
-        <div className="bg-white shadow sm:rounded-lg">
-            <div className="w-full overflow-x-auto">
-            <Table className="min-w-full">
-                <Thead>
-                <Tr>
-                    <Th className="text-left">Категория</Th>
-                    <Th className="text-right">Бюджет</Th>
-                    <Th className="text-right">Потрачено</Th>
-                    <Th className="text-right">Остаток</Th>
-                    <Th />
-                </Tr>
-                </Thead>
-                <Tbody>
+        <div className="bg-[rgb(var(--card))] shadow md:rounded-lg">
+            {/* Mobile cards */}
+            <div className="block md:hidden divide-y divide-[rgb(var(--border))]">
                 {budgets.map((b) => {
                     const catName = categoryMap.get(b.category_id) || `#${b.category_id}`;
                     const spent = +b.spent;
@@ -94,70 +86,156 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
                     const remainingPct = Math.max(0, 100 - spentPct);
                     const overPct = spentPctDisplay > 100 ? Math.round(spentPctDisplay - 100) : 0;
                     return (
-                        <Tr key={b.id}>
-                            <Td className="whitespace-nowrap text-sm text-gray-900">{catName}</Td>
-                            <Td className="whitespace-nowrap text-sm text-right">{formatCurrency(budgeted)}</Td>
-                            <Td className="whitespace-nowrap text-sm text-right">
-                              <div className="flex flex-col items-end">
-                                <div>{formatCurrency(spent)}</div>
-                                <div className="text-xs text-gray-600">Потр: {Math.max(0, spentPctDisplay)}%</div>
-                              </div>
-                            </Td>
-                            <Td className={cn('whitespace-nowrap text-sm text-right', remaining < 0 ? 'text-red-600' : '')}>
-                              <div className="flex flex-col items-end">
-                                <div>{formatCurrency(remaining)}</div>
-                                <div className="text-xs text-gray-600">Ост: {remainingPct}%{overPct > 0 ? ` (+${overPct}% переп.)` : ''}</div>
-                              </div>
-                            </Td>
-                            <Td className="whitespace-nowrap text-sm">
-                                <div className="w-44">
-                                    <div className="h-3 w-full overflow-hidden rounded bg-gray-200 flex">
-                                        <div className={cn('h-3', spentPctDisplay > 100 ? 'bg-red-500' : 'bg-green-500')} style={{ width: `${spentPct}%` }} aria-label={`Потр. ${spentPct}%`} />
-                                        {remainingPct > 0 && (
-                                          <div
-                                            className="h-3 bg-gray-300"
-                                            style={{ width: `${remainingPct}%` }}
-                                            aria-label={`Ост. ${remainingPct}%`}
-                                          />
+                        <div key={b.id} className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-[rgb(var(--app-fg))] truncate">{catName}</p>
+                                        {overPct > 0 ? (
+                                            <Badge variant="destructive">Переп: +{overPct}%</Badge>
+                                        ) : (
+                                            <Badge variant="secondary">Ост: {remainingPct}%</Badge>
                                         )}
                                     </div>
+                                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                                        <div className="text-[rgb(var(--muted-foreground))]">Бюджет</div>
+                                        <div className="text-right">{formatCurrency(budgeted)}</div>
+                                        <div className="text-[rgb(var(--muted-foreground))]">Потр</div>
+                                        <div className="text-right">{formatCurrency(spent)} <span
+                                            className="text-xs text-[rgb(var(--muted-foreground))]">({Math.max(0, spentPctDisplay)}%)</span>
+                                        </div>
+                                        <div className="text-[rgb(var(--muted-foreground))]">Ост</div>
+                                        <div
+                                            className={cn('text-right', remaining < 0 ? 'text-[rgb(var(--destructive))]' : '')}>{formatCurrency(remaining)}
+                                            <span
+                                                className="text-xs text-[rgb(var(--muted-foreground))]">({remainingPct}%)</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3">
+                                        <div className="h-3 w-full overflow-hidden rounded bg-[rgb(var(--muted))] flex">
+                                            <div
+                                                className={cn('h-3', spentPctDisplay > 100 ? 'bg-[rgb(var(--destructive))]' : 'bg-[rgb(var(--success))]')}
+                                                style={{width: `${spentPct}%`}}/>
+                                            {remainingPct > 0 && (
+                                                <div className="h-3 bg-[rgb(var(--border))]"
+                                                     style={{width: `${remainingPct}%`}}/>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </Td>
-                            <Td className="whitespace-nowrap text-right text-sm font-medium space-x-1">
-                                <Button variant="ghost" size="icon" aria-label="Редактировать" onClick={() => onEdit(b)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" aria-label="Удалить" onClick={() => setToDelete(b)}>
-                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                            </Td>
-                        </Tr>
+                                <div className="flex-shrink-0 flex items-start gap-1">
+                                    <Button variant="ghost" size="icon" aria-label="Редактировать"
+                                            onClick={() => onEdit(b)}>
+                                        <Pencil className="h-4 w-4"/>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" aria-label="Удалить"
+                                            onClick={() => setToDelete(b)}>
+                                        <Trash2 className="h-4 w-4 text-[rgb(var(--destructive))]"/>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     );
                 })}
-                </Tbody>
-                <Tfoot>
-                  {(() => {
-                    const totals = budgets.reduce(
-                      (acc, b) => {
-                        acc.budgeted += Number(b.budgeted) || 0;
-                        acc.spent += Number(b.spent) || 0;
-                        acc.remaining += Number(b.remaining) || 0;
-                        return acc;
-                      },
-                      { budgeted: 0, spent: 0, remaining: 0 }
-                    );
-                    return (
-                      <Tr>
-                        <Th className="text-left">Итого</Th>
-                        <Th className="text-right">{formatCurrency(totals.budgeted)}</Th>
-                        <Th className="text-right">{formatCurrency(totals.spent)}</Th>
-                        <Th className={cn('text-right', totals.remaining < 0 ? 'text-red-600' : '')}>{formatCurrency(totals.remaining)}</Th>
-                        <Th />
-                      </Tr>
-                    );
-                  })()}
-                </Tfoot>
-            </Table>
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block w-full overflow-x-auto">
+                <Table className="min-w-full">
+                    <Thead>
+                        <Tr>
+                            <Th className="text-left">Категория</Th>
+                            <Th className="text-right">Бюджет</Th>
+                            <Th className="text-right">Потрачено</Th>
+                            <Th className="text-right">Остаток</Th>
+                            <Th></Th>
+                            <Th className="text-center">Действия</Th>
+                        </Tr>
+                    </Thead>
+                    <Tbody>
+                        {budgets.map((b) => {
+                            const catName = categoryMap.get(b.category_id) || `#${b.category_id}`;
+                            const spent = +b.spent;
+                            const budgeted = +b.budgeted;
+                            const remaining = +b.remaining;
+                            const spentPctDisplay = budgeted > 0 ? Math.round((-spent / budgeted) * 100) : 0;
+                            const spentPct = Math.max(0, Math.min(100, spentPctDisplay));
+                            const remainingPct = Math.max(0, 100 - spentPct);
+                            const overPct = spentPctDisplay > 100 ? Math.round(spentPctDisplay - 100) : 0;
+                            return (
+                                <Tr key={b.id}>
+                                    <Td className="whitespace-nowrap text-sm text-[rgb(var(--app-fg))]">{catName}</Td>
+                                    <Td className="whitespace-nowrap text-sm text-right">{formatCurrency(budgeted)}</Td>
+                                    <Td className="whitespace-nowrap text-sm text-right">
+                                        <div className="flex flex-col items-end">
+                                            <div>{formatCurrency(spent)}</div>
+                                            <div
+                                                className="text-xs text-[rgb(var(--muted-foreground))]">Потр: {Math.max(0, spentPctDisplay)}%
+                                            </div>
+                                        </div>
+                                    </Td>
+                                    <Td className={cn('whitespace-nowrap text-sm text-right', remaining < 0 ? 'text-[rgb(var(--destructive))]' : '')}>
+                                        <div className="flex flex-col items-end">
+                                            <div>{formatCurrency(remaining)}</div>
+                                            <div
+                                                className="text-xs text-[rgb(var(--muted-foreground))]">Ост: {remainingPct}%{overPct > 0 ? ` (+${overPct}% переп.)` : ''}</div>
+                                        </div>
+                                    </Td>
+                                    <Td className="whitespace-nowrap text-sm">
+                                        <div className="w-44">
+                                            <div
+                                                className="h-3 w-full overflow-hidden rounded bg-[rgb(var(--muted))] flex">
+                                                <div
+                                                    className={cn('h-3', spentPctDisplay > 100 ? 'bg-[rgb(var(--destructive))]' : 'bg-[rgb(var(--success))]')}
+                                                    style={{width: `${spentPct}%`}} aria-label={`Потр. ${spentPct}%`}/>
+                                                {remainingPct > 0 && (
+                                                    <div
+                                                        className="h-3 bg-[rgb(var(--border))]"
+                                                        style={{width: `${remainingPct}%`}}
+                                                        aria-label={`Ост. ${remainingPct}%`}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </Td>
+                                    <Td className="whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                        <Button variant="ghost" size="icon" aria-label="Редактировать"
+                                                onClick={() => onEdit(b)}>
+                                            <Pencil className="h-4 w-4"/>
+                                        </Button>
+                                        <Button variant="ghost" size="icon" aria-label="Удалить"
+                                                onClick={() => setToDelete(b)}>
+                                            <Trash2 className="h-4 w-4 text-[rgb(var(--destructive))]"/>
+                                        </Button>
+                                    </Td>
+                                </Tr>
+                            );
+                        })}
+                    </Tbody>
+                    <Tfoot>
+                        {(() => {
+                            const totals = budgets.reduce(
+                                (acc, b) => {
+                                    acc.budgeted += Number(b.budgeted) || 0;
+                                    acc.spent += Number(b.spent) || 0;
+                                    acc.remaining += Number(b.remaining) || 0;
+                                    return acc;
+                                },
+                                {budgeted: 0, spent: 0, remaining: 0}
+                            );
+                            return (
+                                <Tr>
+                                    <Th className="text-left">Итого</Th>
+                                    <Th className="text-right">{formatCurrency(totals.budgeted)}</Th>
+                                    <Th className="text-right">{formatCurrency(totals.spent)}</Th>
+                                    <Th className={cn('text-right', totals.remaining < 0 ? 'text-[rgb(var(--destructive))]' : '')}>{formatCurrency(totals.remaining)}</Th>
+                                    <Th/>
+                                    <Th/>
+                                </Tr>
+                            );
+                        })()}
+                    </Tfoot>
+                </Table>
             </div>
 
             <Dialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
@@ -165,7 +243,7 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
                     <DialogHeader>
                         <DialogTitle>Удалить бюджет?</DialogTitle>
                     </DialogHeader>
-                    <p className="text-sm text-gray-600">Действие нельзя отменить.</p>
+                    <p className="text-sm text-[rgb(var(--muted-foreground))]">Действие нельзя отменить.</p>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setToDelete(null)}>Отмена</Button>
                         <Button

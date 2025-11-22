@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PrescribedExpansesRouteImport } from './routes/prescribed-expanses'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as CategoriesRouteImport } from './routes/categories'
@@ -32,11 +31,6 @@ const StatisticsRoute = StatisticsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrescribedExpansesRoute = PrescribedExpansesRouteImport.update({
-  id: '/prescribed-expanses',
-  path: '/prescribed-expanses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -71,7 +65,6 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -82,7 +75,6 @@ export interface FileRoutesByTo {
   '/categories': typeof CategoriesRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -94,7 +86,6 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/prescribed-expanses': typeof PrescribedExpansesRoute
   '/register': typeof RegisterRoute
   '/statistics': typeof StatisticsRoute
   '/transactions': typeof TransactionsRoute
@@ -107,7 +98,6 @@ export interface FileRouteTypes {
     | '/categories'
     | '/import'
     | '/login'
-    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -118,7 +108,6 @@ export interface FileRouteTypes {
     | '/categories'
     | '/import'
     | '/login'
-    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -129,7 +118,6 @@ export interface FileRouteTypes {
     | '/categories'
     | '/import'
     | '/login'
-    | '/prescribed-expanses'
     | '/register'
     | '/statistics'
     | '/transactions'
@@ -141,7 +129,6 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   ImportRoute: typeof ImportRoute
   LoginRoute: typeof LoginRoute
-  PrescribedExpansesRoute: typeof PrescribedExpansesRoute
   RegisterRoute: typeof RegisterRoute
   StatisticsRoute: typeof StatisticsRoute
   TransactionsRoute: typeof TransactionsRoute
@@ -168,13 +155,6 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/prescribed-expanses': {
-      id: '/prescribed-expanses'
-      path: '/prescribed-expanses'
-      fullPath: '/prescribed-expanses'
-      preLoaderRoute: typeof PrescribedExpansesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -221,7 +201,6 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   ImportRoute: ImportRoute,
   LoginRoute: LoginRoute,
-  PrescribedExpansesRoute: PrescribedExpansesRoute,
   RegisterRoute: RegisterRoute,
   StatisticsRoute: StatisticsRoute,
   TransactionsRoute: TransactionsRoute,

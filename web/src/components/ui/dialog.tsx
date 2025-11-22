@@ -19,7 +19,11 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={() => onOpenChange(false)} />
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: 'rgba(var(--overlay, 0 0 0), 0.4)' }}
+        onClick={() => onOpenChange(false)}
+      />
       {children}
     </div>
   );
@@ -29,7 +33,7 @@ function DialogContent({ className, ...props }: React.HTMLAttributes<HTMLDivElem
   return (
     <div
       className={cn(
-        'relative z-50 w-full max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in zoom-in-95',
+        'relative z-50 w-full max-w-[95vw] sm:max-w-lg md:max-w-xl rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 sm:p-6 shadow-lg animate-in fade-in zoom-in-95 overflow-auto max-h-[85vh] text-[rgb(var(--app-fg))]',
         className
       )}
       {...props}

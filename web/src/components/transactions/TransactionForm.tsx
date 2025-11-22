@@ -95,7 +95,7 @@ export function TransactionForm({
 
         <div>
           <Label className="mb-1" htmlFor="amount">Сумма</Label>
-          <Input id="amount" type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
+          <Input id="amount" type="text" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
         </div>
 
         <div>

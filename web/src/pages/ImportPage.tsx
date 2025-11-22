@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { importApi, type ExcelColumnMapping, type ExcelFileStructure, type ImportResult } from '@/lib/api';
 import { ColumnMappingForm } from '@/components/import/ColumnMappingForm';
 
@@ -54,42 +55,42 @@ export function ImportPage() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Импорт из Excel</h1>
+      <h1 className="text-3xl font-bold text-[rgb(var(--app-fg))] mb-6">Импорт из Excel</h1>
 
       <div className="space-y-6">
         {/* Загрузка файла */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-[rgb(var(--card))] shadow rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">1. Выберите файл Excel</h2>
           <input
             type="file"
             accept=".xlsx,.xls"
             onChange={handleFileSelect}
             disabled={loading}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-[rgb(var(--muted-foreground))] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border file:border-[rgb(var(--border))] file:text-sm file:font-semibold file:bg-[rgb(var(--muted))] file:text-[rgb(var(--app-fg))] hover:file:opacity-90"
           />
-          {loading && <p className="mt-2 text-sm text-gray-500">Обработка файла...</p>}
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          {loading && <p className="mt-2 text-sm text-[rgb(var(--muted-foreground))]">Обработка файла...</p>}
+          {error && <p className="mt-2 text-sm text-[rgb(var(--destructive))]">{error}</p>}
         </div>
 
         {/* Структура файла */}
         {fileStructure && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-[rgb(var(--card))] shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">2. Структура файла</h2>
             <div className="mb-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[rgb(var(--muted-foreground))]">
                 Найдено столбцов: <span className="font-semibold">{fileStructure.columns.length}</span>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[rgb(var(--muted-foreground))]">
                 Найдено строк данных: <span className="font-semibold">{fileStructure.rows}</span>
               </p>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Столбцы:</p>
+              <p className="text-sm font-medium text-[rgb(var(--muted-foreground))] mb-2">Столбцы:</p>
               <div className="flex flex-wrap gap-2">
                 {fileStructure.columns.map((col, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm"
+                    className="px-3 py-1 bg-[rgb(var(--muted))] text-[rgb(var(--app-fg))] rounded-md text-sm"
                   >
                     {col}
                   </span>
@@ -101,9 +102,9 @@ export function ImportPage() {
 
         {/* Маппинг столбцов */}
         {fileStructure && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-[rgb(var(--card))] shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">3. Настройка соответствия столбцов</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[rgb(var(--muted-foreground))] mb-4">
               Выберите, какие столбцы из файла соответствуют полям в системе. Все поля опциональны.
             </p>
             <ColumnMappingForm
@@ -116,26 +117,22 @@ export function ImportPage() {
 
         {/* Кнопка импорта */}
         {fileStructure && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-[rgb(var(--card))] shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">4. Импорт данных</h2>
             {!hasAnyMapping && (
-              <p className="text-sm text-yellow-600 mb-4">
+              <p className="text-sm text-[rgb(var(--primary))] mb-4">
                 Внимание: Не выбрано ни одного столбца для импорта. Выберите хотя бы один столбец для продолжения.
               </p>
             )}
-            <button
-              onClick={handleImport}
-              disabled={importing || !hasAnyMapping}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button onClick={handleImport} disabled={importing || !hasAnyMapping} className="px-6">
               {importing ? 'Импорт...' : 'Начать импорт'}
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Результаты импорта */}
         {importResult && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-[rgb(var(--card))] shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Результаты импорта</h2>
             <div className="space-y-2">
               <p className="text-sm">
@@ -152,10 +149,10 @@ export function ImportPage() {
               </p>
               {importResult.errors && importResult.errors.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-sm font-semibold text-red-600 mb-2">Ошибки:</p>
+                  <p className="text-sm font-semibold text-[rgb(var(--destructive))] mb-2">Ошибки:</p>
                   <ul className="list-disc list-inside space-y-1">
                     {importResult.errors.map((err, idx) => (
-                      <li key={idx} className="text-sm text-red-600">
+                      <li key={idx} className="text-sm text-[rgb(var(--destructive))]">
                         {err}
                       </li>
                     ))}
