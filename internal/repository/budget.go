@@ -104,3 +104,31 @@ func (r BudgetRepositoryPostgres) GetListByPeriod(ctx context.Context, userID ui
 	}
 	return items, nil
 }
+
+func (r BudgetRepositoryPostgres) GetListDetailedByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetDetailed, error) {
+	var items = make([]model.BudgetDetailed, 0)
+	err := r.db.SelectContext(ctx, &items,
+		`SELECT 
+    		b.*,
+            COALESCE(SUM(t.amount), 0)::numeric::float8 AS spent,
+            (b.budgeted + COALESCE(SUM(t.amount), 0))::numeric::float8 AS remaining
+        FROM budgets b
+        LEFT JOIN transaction_categories c ON c.id = b.category_id
+        LEFT JOIN transactions t 
+            ON t.category_id = b.category_id 
+            AND t.user_id = b.user_id
+            AND DATE_TRUNC('month', t.date) = make_date($2, $3, 1)
+        WHERE 
+            b.user_id = $1
+            AND b.year = $2
+            AND b.month = $3
+        GROUP BY 
+            b.id, b.category_id, c.name, b.budgeted
+        ORDER BY 
+            c.name`,
+		userID, year, month)
+	if err != nil {
+		return items, err
+	}
+	return items, nil
+}

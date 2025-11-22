@@ -180,7 +180,7 @@ func (r *BudgetRouter) GetBudgetsByPeriod(c *gin.Context) {
 		return
 	}
 
-	budgets, err := r.service.Budget.GetListByPeriod(c.Request.Context(), logined, uint(year64), uint(month64))
+	budgets, err := r.service.Budget.GetListDetailedByPeriod(c.Request.Context(), logined, uint(year64), uint(month64))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

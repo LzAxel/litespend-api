@@ -50,7 +50,7 @@ type Budget interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.Budget, error)
 	GetList(ctx context.Context, logined model.User) ([]model.Budget, error)
-	GetListByPeriod(ctx context.Context, logined model.User, year uint, month uint) ([]model.Budget, error)
+	GetListDetailedByPeriod(ctx context.Context, logined model.User, year uint, month uint) ([]model.BudgetDetailed, error)
 }
 
 type Auth interface {

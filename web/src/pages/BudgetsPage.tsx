@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { BudgetForm } from '@/components/budgets/BudgetForm';
 import { BudgetList } from '@/components/budgets/BudgetList';
-import type { Budget } from '@/lib/api';
+import type { BudgetDetailed } from '@/lib/api';
 
 export function BudgetsPage() {
   const now = new Date();
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(now.getMonth() + 1);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Budget | null>(null);
+  const [editing, setEditing] = useState<BudgetDetailed | null>(null);
 
   const handleCreate = () => {
     setEditing(null);
     setShowForm(true);
   };
 
-  const handleEdit = (b: Budget) => {
+  const handleEdit = (b: BudgetDetailed) => {
     setEditing(b);
     setShowForm(true);
   };

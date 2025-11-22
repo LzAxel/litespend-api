@@ -43,6 +43,7 @@ type BudgetRepository interface {
 	GetByID(ctx context.Context, id int) (model.Budget, error)
 	GetList(ctx context.Context, userID uint64) ([]model.Budget, error)
 	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.Budget, error)
+	GetListDetailedByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetDetailed, error)
 }
 
 type Repository struct {

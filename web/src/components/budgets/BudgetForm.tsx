@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { budgetsApi, categoriesApi, type Budget, type CreateBudgetRequest, type UpdateBudgetRequest, type Category } from '@/lib/api';
+import { budgetsApi, categoriesApi, type BudgetDetailed, type CreateBudgetRequest, type UpdateBudgetRequest, type Category } from '@/lib/api';
 
 interface BudgetFormProps {
-  budget?: Budget | null;
+  budget?: BudgetDetailed | null;
   defaultYear?: number;
   defaultMonth?: number;
   onClose: () => void;

@@ -15,6 +15,18 @@ type Budget struct {
 	CreatedAt  time.Time       `json:"created_at" db:"created_at"`
 }
 
+type BudgetDetailed struct {
+	ID         uint64          `json:"id" db:"id"`
+	UserID     uint64          `json:"user_id" db:"user_id"`
+	CategoryID uint64          `json:"category_id" db:"category_id"`
+	Year       uint            `json:"year" db:"year"`
+	Month      uint            `json:"month" db:"month"`
+	Budgeted   decimal.Decimal `json:"budgeted" db:"budgeted"`
+	Spent      decimal.Decimal `json:"spent" db:"spent"`
+	Remaining  decimal.Decimal `json:"remaining" db:"remaining"`
+	CreatedAt  time.Time       `json:"created_at" db:"created_at"`
+}
+
 type CreateBudgetRecord struct {
 	UserID     uint64          `json:"user_id"`
 	CategoryID uint64          `json:"category_id"`
