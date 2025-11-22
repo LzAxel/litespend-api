@@ -27,7 +27,7 @@ func NewSessionManager(store SessionStore) *SessionManager {
 
 	sessionManager.manager.Lifetime = 7 * 24 * time.Hour
 	sessionManager.manager.IdleTimeout = 48 * time.Hour
-	sessionManager.manager.Cookie.Secure = true
+	sessionManager.manager.Cookie.Secure = false
 	sessionManager.manager.Cookie.HttpOnly = true
 	sessionManager.manager.Cookie.SameSite = http.SameSiteLaxMode
 	sessionManager.manager.Cookie.Name = "litespend_session"
