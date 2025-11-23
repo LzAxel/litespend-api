@@ -49,7 +49,7 @@ export function StatisticsPage() {
     return <div className="text-center py-8">Загрузка...</div>;
   }
 
-  const freeBalance = parseFloat(balance.total_income) - parseFloat(balance.total_expense);
+  const freeBalance = parseFloat(balance.total_income) + parseFloat(balance.total_expense);
 
   return (
     <div className="px-4 py-6 sm:px-0 space-y-6">

@@ -70,6 +70,6 @@ func NewService(repository *repository.Repository, sessionManager *session.Sessi
 		Category:    NewCategoryService(repository.CategoryRepository),
 		Budget:      NewBudgetService(repository.BudgetRepository),
 		Auth:        NewAuthService(sessionManager, repository.UserRepository),
-		Import:      NewImportService(repository.TransactionRepository, repository.CategoryRepository),
+		Import:      NewImportService(repository.TransactionRepository, repository.CategoryRepository, repository.BudgetRepository),
 	}
 }

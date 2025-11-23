@@ -100,7 +100,7 @@ func (r TransactionRepositoryPostgres) GetByID(ctx context.Context, id int) (mod
 }
 
 func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.Transaction, error) {
-	var transactions []model.Transaction
+	var transactions []model.Transaction = make([]model.Transaction, 0)
 
 	err := r.db.SelectContext(ctx, &transactions, `SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC, created_at DESC`, userID)
 	if err != nil {
@@ -111,7 +111,7 @@ func (r TransactionRepositoryPostgres) GetList(ctx context.Context, userID uint6
 }
 
 func (r TransactionRepositoryPostgres) GetListPaginated(ctx context.Context, userID uint64, params model.PaginationParams) ([]model.Transaction, int, error) {
-	var transactions []model.Transaction
+	var transactions []model.Transaction = make([]model.Transaction, 0)
 	var total int
 
 	whereClause := "WHERE t.user_id = $1"
@@ -172,43 +172,46 @@ func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context,
 	var stats model.CurrentBalanceStatistics
 
 	query := `
-		WITH 
-		balance AS (
-			SELECT COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)::numeric(14,2) as expanses,
-			COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)::numeric(14,2) as income
-			FROM transactions WHERE user_id = $1
-		),
-		budgets AS (
-			SELECT
-				COALESCE(SUM(b.budgeted), 0)::numeric(14,2) AS reserved,
-				COALESCE(SUM(t.amount), 0)::numeric(14,2) AS spent,
-				(b.budgeted + COALESCE(SUM(t.amount), 0))::numeric::float8 AS remaining
-			FROM budgets b
-			LEFT JOIN transaction_categories c ON c.id = b.category_id
-			LEFT JOIN transactions t 
-				ON t.category_id = b.category_id 
-				AND t.user_id = b.user_id
-				AND DATE_TRUNC('month', t.date) = make_date($2, $3, 1)
-			WHERE 
-				b.user_id = $1
-				AND b.year = $2
-				AND b.month = $3
-			GROUP BY 
-				b.id, b.category_id, c.name, b.budgeted
-		)
-		SELECT 
-			balance.expanses AS total_expanse,
-			balance.income AS total_income,
-			budgets.reserved AS total_reserved,
-			budgets.reserved AS reserved_budgets,
-			balance.income - balance.expanses - budgets.reserved AS free_to_distribute
-		FROM budgets, balance`
+WITH params AS (SELECT $1::bigint                                      AS user_id,
+                       $2::int                                         AS target_year,
+                       $3::int                                         AS target_month,
+                       make_date($2, $3, 1)::date                      AS month_start,
+                       make_date($2, $3, 1)::date + interval '1 month' AS month_end),
+     balance AS (SELECT COALESCE(SUM(amount) FILTER (WHERE amount < 0), 0)::numeric(14, 2) AS expenses,
+                        COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0)::numeric(14, 2) AS income
+                 FROM transactions t
+                          CROSS JOIN params p
+                 WHERE t.user_id = p.user_id),
+     budget as (SELECT b.id,
+                       b.budgeted                                                                 as reserved,
+                       SUM(tr.amount)::numeric(14, 2)                                             as spent,
+                       CASE
+                           WHEN b.budgeted + SUM(tr.amount)::numeric(14, 2) < 0 THEN 0
+                           ELSE (b.budgeted + SUM(tr.amount)::numeric(14, 2))::numeric(14, 2) END AS remaining
+                FROM budgets b
+                         CROSS JOIN params p
+                         LEFT JOIN transactions tr
+                                   ON b.category_id = tr.category_id
+                WHERE b.user_id = p.user_id
+                  AND b.year = p.target_year
+                  AND b.month = p.target_month
+                GROUP BY b.id),
+     budget_calc as (SELECT SUM(b.reserved)::numeric(14, 2)  as budget_reserved,
+                            SUM(b.remaining)::numeric(14, 2) as budget_remaining,
+                            SUM(b.spent)::numeric(14, 2)        budget_spent
+                     FROM budget b)
+SELECT b.expenses                                                    as total_expense,
+       b.income                                                      as total_income,
+       bc.budget_reserved                                            as total_reserved,
+       (b.income + b.expenses - bc.budget_remaining)::numeric(14, 2) as free_to_distribute
+FROM balance b
+         CROSS JOIN budget_calc bc
+		`
 
 	type row struct {
-		TotalExpense     decimal.Decimal `db:"total_expanse"`
+		TotalExpense     decimal.Decimal `db:"total_expense"`
 		TotalIncome      decimal.Decimal `db:"total_income"`
 		TotalReserved    decimal.Decimal `db:"total_reserved"`
-		ReservedBudgets  decimal.Decimal `db:"reserved_budgets"`
 		FreeToDistribute decimal.Decimal `db:"free_to_distribute"`
 	}
 
@@ -220,7 +223,6 @@ func (r TransactionRepositoryPostgres) GetBalanceStatistics(ctx context.Context,
 	stats.TotalExpense = snapshot.TotalExpense
 	stats.TotalIncome = snapshot.TotalIncome
 	stats.TotalReserved = snapshot.TotalReserved
-	stats.ReservedBudgets = snapshot.ReservedBudgets
 	stats.FreeToDistribute = snapshot.FreeToDistribute
 
 	return stats, nil

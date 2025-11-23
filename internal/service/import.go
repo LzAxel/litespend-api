@@ -22,15 +22,18 @@ var (
 type ImportService struct {
 	transactionRepo repository.TransactionRepository
 	categoryRepo    repository.CategoryRepository
+	budgetRepo      repository.BudgetRepository
 }
 
 func NewImportService(
 	transactionRepo repository.TransactionRepository,
 	categoryRepo repository.CategoryRepository,
+	budgetRepo repository.BudgetRepository,
 ) *ImportService {
 	return &ImportService{
 		transactionRepo: transactionRepo,
 		categoryRepo:    categoryRepo,
+		budgetRepo:      budgetRepo,
 	}
 }
 
@@ -92,7 +95,7 @@ func (s *ImportService) ImportData(ctx context.Context, logined model.User, file
 		}
 
 		// Импорт транзакций
-		if mapping.TransactionAmount != nil {
+		if mapping.TransactionAmount != "" {
 			if err := s.importTransaction(ctx, logined, row, columnIndexes, mapping); err != nil {
 				result.Errors = append(result.Errors, fmt.Sprintf("Строка %d (транзакция): %v", i+1, err))
 			} else {
@@ -109,51 +112,50 @@ func (s *ImportService) ImportData(ctx context.Context, logined model.User, file
 				result.CategoriesCreated++
 			}
 		}
+
+		// Импорт бюджетов
+		if mapping.BudgetName != nil {
+			created, err := s.importBudgets(ctx, logined, row, columnIndexes, mapping)
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Строка %d (бюджет): %v", i+1, err))
+			} else if created {
+				result.BudgetsCreated++
+			}
+		}
 	}
 
 	return result, nil
 }
 
 type columnIndexes struct {
-	transactionDescription       int
-	transactionAmount            int
-	transactionType              int
-	transactionDate              int
-	transactionCategory          int
-	categoryName                 int
-	categoryType                 int
-	prescribedExpanseDescription int
-	prescribedExpanseAmount      int
-	prescribedExpanseFrequency   int
-	prescribedExpanseDate        int
-	prescribedExpanseCategory    int
+	transactionDescription int
+	transactionAmount      int
+	transactionDate        int
+	transactionCategory    int
+	categoryName           int
+	categoryType           int
+	budgetName             int
+	budgetAmount           int
 }
 
 func (s *ImportService) getColumnIndexes(headers []string, mapping model.ExcelColumnMapping) columnIndexes {
 	indexes := columnIndexes{
-		transactionDescription:       -1,
-		transactionAmount:            -1,
-		transactionType:              -1,
-		transactionDate:              -1,
-		transactionCategory:          -1,
-		categoryName:                 -1,
-		categoryType:                 -1,
-		prescribedExpanseDescription: -1,
-		prescribedExpanseAmount:      -1,
-		prescribedExpanseFrequency:   -1,
-		prescribedExpanseDate:        -1,
-		prescribedExpanseCategory:    -1,
+		transactionDescription: -1,
+		transactionAmount:      -1,
+		transactionDate:        -1,
+		transactionCategory:    -1,
+		categoryName:           -1,
+		categoryType:           -1,
+		budgetName:             -1,
+		budgetAmount:           -1,
 	}
 
 	for i, header := range headers {
-		if mapping.TransactionDescription != "" && strings.EqualFold(header, mapping.TransactionDescription) {
+		if mapping.TransactionDescription != nil && strings.EqualFold(header, *mapping.TransactionDescription) {
 			indexes.transactionDescription = i
 		}
-		if mapping.TransactionAmount != nil && strings.EqualFold(header, *mapping.TransactionAmount) {
+		if mapping.TransactionAmount != "" && strings.EqualFold(header, mapping.TransactionAmount) {
 			indexes.transactionAmount = i
-		}
-		if mapping.TransactionType != nil && strings.EqualFold(header, *mapping.TransactionType) {
-			indexes.transactionType = i
 		}
 		if mapping.TransactionDate != nil && strings.EqualFold(header, *mapping.TransactionDate) {
 			indexes.transactionDate = i
@@ -222,7 +224,6 @@ func (s *ImportService) importTransaction(ctx context.Context, logined model.Use
 						break
 					}
 				}
-				// Если категория не найдена, создаем её
 				if categoryID == 0 {
 					catType := model.CategoryTypeExpense
 					newCatID, err := s.categoryRepo.Create(ctx, model.CreateCategoryRecord{
@@ -284,9 +285,64 @@ func (s *ImportService) importCategory(ctx context.Context, logined model.User, 
 	_, err = s.categoryRepo.Create(ctx, model.CreateCategoryRecord{
 		UserID:    logined.ID,
 		Name:      name,
+		Type:      model.CategoryTypeExpense,
 		CreatedAt: time.Now(),
 	})
 
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *ImportService) importBudgets(ctx context.Context, logined model.User, row []string, indexes columnIndexes, mapping model.ExcelColumnMapping) (bool, error) {
+	if indexes.budgetName < 0 {
+		return false, errors.New("не указан столбец для названия бюджета")
+	}
+
+	name := s.getCellValue(row, indexes.categoryName)
+	if name == "" {
+		return false, errors.New("название категории бюджета не может быть пустым")
+	}
+
+	if indexes.transactionAmount < 0 {
+		return false, errors.New("не указан столбец для суммы транзакции")
+	}
+	amountStr := s.getCellValue(row, indexes.transactionAmount)
+	if amountStr == "" {
+		return false, errors.New("сумма транзакции не может быть пустой")
+	}
+
+	amount, err := tryParseAmount(amountStr)
+	if err != nil {
+		return false, fmt.Errorf("неверный формат суммы: %v", err)
+	}
+
+	var categoryID uint64 = 0
+	categories, err := s.categoryRepo.GetList(ctx, logined.ID)
+	if err != nil {
+		return false, errors.New("Не удалось получить список категорий при создании бюджета для '" + name + "'")
+	}
+	for _, cat := range categories {
+		if strings.EqualFold(cat.Name, name) {
+			categoryID = cat.ID
+		}
+	}
+
+	if categoryID == 0 {
+		return false, errors.New("Не удалось найти категорию при создании бюджета для '" + name + "'")
+	}
+
+	year, month, _ := time.Now().Date()
+
+	_, err = s.budgetRepo.Create(ctx, model.CreateBudgetRecord{
+		UserID:     logined.ID,
+		CategoryID: categoryID,
+		Year:       uint(year),
+		Month:      uint(month),
+		Budgeted:   amount,
+		CreatedAt:  time.Now(),
+	})
 	if err != nil {
 		return false, err
 	}

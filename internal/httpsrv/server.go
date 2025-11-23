@@ -43,7 +43,7 @@ func (s *Server) setup() {
 		gin.Recovery(),
 		sloggin.New(slog.Default()),
 		cors.New(cors.Config{
-			AllowOrigins:     []string{"http://localhost:5173"},
+			AllowOrigins:     []string{"http://localhost:5173", "http://192.168.1.90:5173"},
 			AllowMethods:     []string{"POST", "GET", "OPTIONS", "PUT", "PATCH", "DELETE"},
 			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
 			AllowFiles:       true,

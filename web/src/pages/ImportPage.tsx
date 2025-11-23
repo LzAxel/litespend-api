@@ -144,8 +144,8 @@ export function ImportPage() {
                 {importResult.categories_created}
               </p>
               <p className="text-sm">
-                <span className="font-semibold">Обязательных трат создано:</span>{' '}
-                {importResult.prescribed_expanses_created}
+                <span className="font-semibold">Бюджетов создано:</span>{' '}
+                {importResult.budgets_created}
               </p>
               {importResult.errors && importResult.errors.length > 0 && (
                 <div className="mt-4">

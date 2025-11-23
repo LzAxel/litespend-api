@@ -17,7 +17,6 @@ type CurrentBalanceStatistics struct {
 	TotalExpense     decimal.Decimal `json:"total_expense"`
 	TotalIncome      decimal.Decimal `json:"total_income"`
 	TotalReserved    decimal.Decimal `json:"total_reserved"`
-	ReservedBudgets  decimal.Decimal `json:"reserved_budgets"`
 	FreeToDistribute decimal.Decimal `json:"free_to_distribute"`
 }
 
