@@ -109,7 +109,7 @@ export function Layout({children}: LayoutProps) {
                     </div>
                 </aside>
 
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col w-full">
                     <header
                         className="flex items-center justify-between h-14 border-b border-[rgb(var(--border))] bg-[rgb(var(--card))] px-4 md:px-6 md:hidden">
                         <Button variant="outline" size="icon" onClick={() => setMobileOpen(true)} aria-label="Меню">

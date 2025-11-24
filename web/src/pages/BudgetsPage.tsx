@@ -63,7 +63,7 @@ export function BudgetsPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <h1 className="text-2xl sm:text-3xl font-bold">Бюджеты</h1>
           <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex items-end justify-between gap-2 sm:col-span-2 md:col-span-1">
+            <div className="flex items-end justify-between gap-2 sm:col-span-2 md:col-span-1 items-center">
               <Button variant="outline" onClick={prevMonth} aria-label="Предыдущий месяц" className="shrink-0">←</Button>
               <div className="flex-1 min-w-0 px-1">
                 <Label htmlFor="month" className="text-xs sm:text-sm">Месяц</Label>
@@ -90,7 +90,7 @@ export function BudgetsPage() {
               </div>
               <Button variant="outline" onClick={nextMonth} aria-label="Следующий месяц" className="shrink-0">→</Button>
             </div>
-            <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center justify-center gap-2" aria-label="Добавить бюджет">
+            <Button onClick={handleCreate} className="w-full span sm:w-auto flex items-center justify-center gap-2" aria-label="Добавить бюджет">
               <Plus className="h-5 w-5 md:hidden" />
               <span className="hidden md:inline">Добавить</span>
             </Button>

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.90:8888/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -224,12 +224,16 @@ export const prescribedExpansesApi = {
 export interface ExcelColumnMapping {
   transaction_description?: string;
   transaction_amount?: string;
+  transaction_type?: string;
   transaction_date?: string;
   transaction_category?: string;
   category_name?: string;
   category_type?: string;
-  budget_name?: string;
-  budget_amount?: string;
+  prescribed_expanse_description?: string;
+  prescribed_expanse_amount?: string;
+  prescribed_expanse_frequency?: string;
+  prescribed_expanse_date?: string;
+  prescribed_expanse_category?: string;
 }
 
 export interface ExcelFileStructure {
@@ -240,7 +244,7 @@ export interface ExcelFileStructure {
 export interface ImportResult {
   transactions_created: number;
   categories_created: number;
-  budgets_created: number;
+  prescribed_expanses_created: number;
   errors?: string[];
 }
 

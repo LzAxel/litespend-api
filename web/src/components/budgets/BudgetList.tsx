@@ -73,7 +73,7 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
     );
 
     return (
-        <div className="bg-[rgb(var(--card))] shadow md:rounded-lg">
+        <div className="bg-[rgb(var(--card))] shadow rounded-lg">
             {/* Mobile cards */}
             <div className="block md:hidden divide-y divide-[rgb(var(--border))]">
                 {budgets.map((b) => {
@@ -86,53 +86,42 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
                     const remainingPct = Math.max(0, 100 - spentPct);
                     const overPct = spentPctDisplay > 100 ? Math.round(spentPctDisplay - 100) : 0;
                     return (
-                        <div key={b.id} className="p-4">
+                        <div key={b.id} className="p-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-[rgb(var(--app-fg))] truncate">{catName}</p>
-                                        {overPct > 0 ? (
-                                            <Badge variant="destructive">Переп: +{overPct}%</Badge>
-                                        ) : (
-                                            <Badge variant="secondary">Ост: {remainingPct}%</Badge>
-                                        )}
-                                    </div>
-                                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                                        <div className="text-[rgb(var(--muted-foreground))]">Бюджет</div>
-                                        <div className="text-right">{formatCurrency(budgeted)}</div>
-                                        <div className="text-[rgb(var(--muted-foreground))]">Потр</div>
-                                        <div className="text-right">{formatCurrency(spent)} <span
-                                            className="text-xs text-[rgb(var(--muted-foreground))]">({Math.max(0, spentPctDisplay)}%)</span>
+                                    <div className="flex flex-row justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-medium text-[rgb(var(--app-fg))] truncate">{catName}</p>
                                         </div>
-                                        <div className="text-[rgb(var(--muted-foreground))]">Ост</div>
-                                        <div
-                                            className={cn('text-right', remaining < 0 ? 'text-[rgb(var(--destructive))]' : '')}>{formatCurrency(remaining)}
-                                            <span
-                                                className="text-xs text-[rgb(var(--muted-foreground))]">({remainingPct}%)</span>
-                                        </div>
+                                        <Badge variant="default"
+                                               className="border-none bg-[rgb(var(--success))] text-[rbg(var(--muted-foreground))] py-0.5 px-1">{formatCurrency(remaining)}</Badge>
                                     </div>
                                     <div className="mt-3">
-                                        <div className="h-3 w-full overflow-hidden rounded bg-[rgb(var(--muted))] flex">
+                                        <div className="h-2 w-full overflow-hidden rounded bg-[rgb(var(--muted))] flex">
                                             <div
-                                                className={cn('h-3', spentPctDisplay > 100 ? 'bg-[rgb(var(--destructive))]' : 'bg-[rgb(var(--success))]')}
+                                                className={cn('h-2', spentPctDisplay > 100 ? 'bg-[rgb(var(--destructive))]' : 'bg-[rgb(var(--success))]')}
                                                 style={{width: `${spentPct}%`}}/>
-                                            {remainingPct > 0 && (
-                                                <div className="h-3 bg-[rgb(var(--border))]"
-                                                     style={{width: `${remainingPct}%`}}/>
-                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-row justify-between items-center mt-3">
+                                        <div className="flex flex-col gap-1 text-sm text-[rgb(var(--muted-foreground))]">
+                                            <p>Потрачено: <span>{formatCurrency(spent)}</span></p>
+                                            <p>Остаток: <span className="text-[rgb(var(--success))]">{formatCurrency(remaining)}</span></p>
+                                        </div>
+                                        <div className="flex items-start gap-1 w-fit">
+                                            <Button className="w-8 h-8" variant="ghost" size="icon"
+                                                    aria-label="Редактировать"
+                                                    onClick={() => onEdit(b)}>
+                                                <Pencil className="h-4 w-4"/>
+                                            </Button>
+                                            <Button className="w-8 h-8" variant="ghost" size="icon" aria-label="Удалить"
+                                                    onClick={() => setToDelete(b)}>
+                                                <Trash2 className="h-4 w-4 text-[rgb(var(--destructive))]"/>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex-shrink-0 flex items-start gap-1">
-                                    <Button variant="ghost" size="icon" aria-label="Редактировать"
-                                            onClick={() => onEdit(b)}>
-                                        <Pencil className="h-4 w-4"/>
-                                    </Button>
-                                    <Button variant="ghost" size="icon" aria-label="Удалить"
-                                            onClick={() => setToDelete(b)}>
-                                        <Trash2 className="h-4 w-4 text-[rgb(var(--destructive))]"/>
-                                    </Button>
-                                </div>
+
                             </div>
                         </div>
                     );
