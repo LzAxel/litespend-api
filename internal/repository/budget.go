@@ -20,14 +20,14 @@ func NewBudgetRepositoryPostgres(db *sqlx.DB) BudgetRepositoryPostgres {
 	}
 }
 
-func (r BudgetRepositoryPostgres) Create(ctx context.Context, record model.CreateBudgetRecord) (int, error) {
+func (r BudgetRepositoryPostgres) Create(ctx context.Context, record model.CreateBudgetAllocationRecord) (int, error) {
 	var createdID int
 
 	err := databases.WithinTransaction(ctx, r.db, func(tx *sqlx.Tx) error {
 		err := tx.GetContext(ctx, &createdID,
 			`INSERT INTO budgets(user_id, category_id, year, month, budgeted, created_at) 
 			 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-			record.UserID, record.CategoryID, record.Year, record.Month, record.Budgeted, record.CreatedAt,
+			record.UserID, record.CategoryID, record.Year, record.Month, record.Assigned, record.CreatedAt,
 		)
 		if err != nil {
 			return err
@@ -41,7 +41,7 @@ func (r BudgetRepositoryPostgres) Create(ctx context.Context, record model.Creat
 	return createdID, nil
 }
 
-func (r BudgetRepositoryPostgres) Update(ctx context.Context, id int, dto model.UpdateBudgetRequest) error {
+func (r BudgetRepositoryPostgres) Update(ctx context.Context, id int, dto model.UpdateBudgetAllocationRequest) error {
 	query := r.sq.Update("budgets").Where(sq.Eq{"id": id})
 
 	if dto.CategoryID != nil {
@@ -53,8 +53,8 @@ func (r BudgetRepositoryPostgres) Update(ctx context.Context, id int, dto model.
 	if dto.Month != nil {
 		query = query.Set("month", *dto.Month)
 	}
-	if dto.Budgeted != nil {
-		query = query.Set("budgeted", *dto.Budgeted)
+	if dto.Assigned != nil {
+		query = query.Set("budgeted", *dto.Assigned)
 	}
 
 	sqlQuery, args, err := query.ToSql()
@@ -78,8 +78,8 @@ func (r BudgetRepositoryPostgres) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r BudgetRepositoryPostgres) GetByID(ctx context.Context, id int) (model.Budget, error) {
-	var b model.Budget
+func (r BudgetRepositoryPostgres) GetByID(ctx context.Context, id int) (model.BudgetAllocation, error) {
+	var b model.BudgetAllocation
 	err := r.db.GetContext(ctx, &b, `SELECT * FROM budgets WHERE id = $1`, id)
 	if err != nil {
 		return b, err
@@ -87,8 +87,8 @@ func (r BudgetRepositoryPostgres) GetByID(ctx context.Context, id int) (model.Bu
 	return b, nil
 }
 
-func (r BudgetRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.Budget, error) {
-	var items []model.Budget = make([]model.Budget, 0)
+func (r BudgetRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.BudgetAllocation, error) {
+	var items []model.BudgetAllocation = make([]model.BudgetAllocation, 0)
 	err := r.db.SelectContext(ctx, &items, `SELECT * FROM budgets WHERE user_id = $1 ORDER BY year DESC, month DESC, category_id`, userID)
 	if err != nil {
 		return items, err
@@ -96,8 +96,8 @@ func (r BudgetRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([
 	return items, nil
 }
 
-func (r BudgetRepositoryPostgres) GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.Budget, error) {
-	var items []model.Budget = make([]model.Budget, 0)
+func (r BudgetRepositoryPostgres) GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetAllocation, error) {
+	var items []model.BudgetAllocation = make([]model.BudgetAllocation, 0)
 	err := r.db.SelectContext(ctx, &items, `SELECT * FROM budgets WHERE user_id = $1 AND year = $2 AND month = $3 ORDER BY category_id`, userID, year, month)
 	if err != nil {
 		return items, err

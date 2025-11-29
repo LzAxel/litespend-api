@@ -29,20 +29,19 @@ type TransactionRepository interface {
 
 type CategoryRepository interface {
 	Create(ctx context.Context, category model.CreateCategoryRecord) (int, error)
-	Update(ctx context.Context, id int, dto model.UpdateCategoryRequest) error
+	Update(ctx context.Context, id int, dto model.UpdateCategoryRecord) error
 	Delete(ctx context.Context, id int) error
-	GetByID(ctx context.Context, id int) (model.TransactionCategory, error)
-	GetList(ctx context.Context, userID uint64) ([]model.TransactionCategory, error)
-	GetListByType(ctx context.Context, userID uint64, categoryType model.CategoryType) ([]model.TransactionCategory, error)
+	GetByID(ctx context.Context, id int) (model.Category, error)
+	GetList(ctx context.Context, userID uint64) ([]model.Category, error)
 }
 
 type BudgetRepository interface {
-	Create(ctx context.Context, record model.CreateBudgetRecord) (int, error)
-	Update(ctx context.Context, id int, dto model.UpdateBudgetRequest) error
+	Create(ctx context.Context, record model.CreateBudgetAllocationRecord) (int, error)
+	Update(ctx context.Context, id int, dto model.UpdateBudgetAllocationRequest) error
 	Delete(ctx context.Context, id int) error
-	GetByID(ctx context.Context, id int) (model.Budget, error)
-	GetList(ctx context.Context, userID uint64) ([]model.Budget, error)
-	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.Budget, error)
+	GetByID(ctx context.Context, id int) (model.BudgetAllocation, error)
+	GetList(ctx context.Context, userID uint64) ([]model.BudgetAllocation, error)
+	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetAllocation, error)
 	GetListDetailedByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetDetailed, error)
 }
 

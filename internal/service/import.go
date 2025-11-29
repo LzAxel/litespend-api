@@ -335,12 +335,12 @@ func (s *ImportService) importBudgets(ctx context.Context, logined model.User, r
 
 	year, month, _ := time.Now().Date()
 
-	_, err = s.budgetRepo.Create(ctx, model.CreateBudgetRecord{
+	_, err = s.budgetRepo.Create(ctx, model.CreateBudgetAllocationRecord{
 		UserID:     logined.ID,
 		CategoryID: categoryID,
 		Year:       uint(year),
 		Month:      uint(month),
-		Budgeted:   amount,
+		Assigned:   amount,
 		CreatedAt:  time.Now(),
 	})
 	if err != nil {

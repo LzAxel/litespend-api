@@ -2,34 +2,35 @@ package model
 
 import "time"
 
-type CategoryType uint8
-
-const (
-	CategoryTypeIncome  CategoryType = 0
-	CategoryTypeExpense CategoryType = 1
-)
-
-type TransactionCategory struct {
-	ID        uint64       `json:"id" db:"id"`
-	UserID    uint64       `json:"user_id" db:"user_id"`
-	Name      string       `json:"name" db:"name"`
-	Type      CategoryType `json:"type" db:"type"`
-	CreatedAt time.Time    `json:"created_at" db:"created_at"`
+type Category struct {
+	ID        uint64    `json:"id" db:"id"`
+	UserID    uint64    `json:"user_id" db:"user_id"`
+	Name      string    `json:"name" db:"name"`
+	GroupName string    `json:"group_name" db:"group_name"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type CreateCategoryRequest struct {
-	Name string       `json:"name" binding:"required"`
-	Type CategoryType `json:"type"`
+	Name      string `json:"name" binding:"required"`
+	GroupName string `json:"group_name"`
 }
 
 type UpdateCategoryRequest struct {
-	Name *string       `json:"name"`
-	Type *CategoryType `json:"type"`
+	Name      *string `json:"name"`
+	GroupName *string `json:"group_name"`
+}
+
+type UpdateCategoryRecord struct {
+	Name      *string
+	GroupName *string
+	UpdatedAt time.Time
 }
 
 type CreateCategoryRecord struct {
 	UserID    uint64
 	Name      string
-	Type      CategoryType
+	GroupName string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }

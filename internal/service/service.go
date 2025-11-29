@@ -39,17 +39,17 @@ type Category interface {
 	Create(ctx context.Context, logined model.User, req model.CreateCategoryRequest) (int, error)
 	Update(ctx context.Context, logined model.User, id int, dto model.UpdateCategoryRequest) error
 	Delete(ctx context.Context, logined model.User, id int) error
-	GetByID(ctx context.Context, logined model.User, id int) (model.TransactionCategory, error)
-	GetList(ctx context.Context, logined model.User) ([]model.TransactionCategory, error)
-	GetListByType(ctx context.Context, logined model.User, categoryType model.CategoryType) ([]model.TransactionCategory, error)
+	GetByID(ctx context.Context, logined model.User, id int) (model.Category, error)
+	GetList(ctx context.Context, logined model.User) ([]model.Category, error)
+	GetListByType(ctx context.Context, logined model.User, categoryType model.CategoryType) ([]model.Category, error)
 }
 
 type Budget interface {
-	Create(ctx context.Context, logined model.User, req model.CreateBudgetRequest) (int, error)
-	Update(ctx context.Context, logined model.User, id int, dto model.UpdateBudgetRequest) error
+	Create(ctx context.Context, logined model.User, req model.CreateBudgetAllocationRequest) (int, error)
+	Update(ctx context.Context, logined model.User, id int, dto model.UpdateBudgetAllocationRequest) error
 	Delete(ctx context.Context, logined model.User, id int) error
-	GetByID(ctx context.Context, logined model.User, id int) (model.Budget, error)
-	GetList(ctx context.Context, logined model.User) ([]model.Budget, error)
+	GetByID(ctx context.Context, logined model.User, id int) (model.BudgetAllocation, error)
+	GetList(ctx context.Context, logined model.User) ([]model.BudgetAllocation, error)
 	GetListDetailedByPeriod(ctx context.Context, logined model.User, year uint, month uint) ([]model.BudgetDetailed, error)
 }
 

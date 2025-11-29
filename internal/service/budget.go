@@ -20,19 +20,19 @@ func NewBudgetService(repository repository.BudgetRepository) *BudgetService {
 	return &BudgetService{repo: repository}
 }
 
-func (s *BudgetService) Create(ctx context.Context, logined model.User, req model.CreateBudgetRequest) (int, error) {
-	record := model.CreateBudgetRecord{
+func (s *BudgetService) Create(ctx context.Context, logined model.User, req model.CreateBudgetAllocationRequest) (int, error) {
+	record := model.CreateBudgetAllocationRecord{
 		UserID:     logined.ID,
 		CategoryID: req.CategoryID,
 		Year:       req.Year,
 		Month:      req.Month,
-		Budgeted:   req.Budgeted,
+		Assigned:   req.Assigned,
 		CreatedAt:  time.Now(),
 	}
 	return s.repo.Create(ctx, record)
 }
 
-func (s *BudgetService) Update(ctx context.Context, logined model.User, id int, dto model.UpdateBudgetRequest) error {
+func (s *BudgetService) Update(ctx context.Context, logined model.User, id int, dto model.UpdateBudgetAllocationRequest) error {
 	budget, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return ErrBudgetNotFound
@@ -54,7 +54,7 @@ func (s *BudgetService) Delete(ctx context.Context, logined model.User, id int) 
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *BudgetService) GetByID(ctx context.Context, logined model.User, id int) (model.Budget, error) {
+func (s *BudgetService) GetByID(ctx context.Context, logined model.User, id int) (model.BudgetAllocation, error) {
 	budget, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return budget, ErrBudgetNotFound
@@ -65,7 +65,7 @@ func (s *BudgetService) GetByID(ctx context.Context, logined model.User, id int)
 	return budget, nil
 }
 
-func (s *BudgetService) GetList(ctx context.Context, logined model.User) ([]model.Budget, error) {
+func (s *BudgetService) GetList(ctx context.Context, logined model.User) ([]model.BudgetAllocation, error) {
 	return s.repo.GetList(ctx, logined.ID)
 }
 

@@ -1,65 +1,62 @@
 CREATE TABLE users
 (
-    id            BIGSERIAL PRIMARY KEY UNIQUE,
-    username      VARCHAR(25) UNIQUE,
-    password_hash TEXT      NOT NULL,
-    created_at    TIMESTAMP NOT NULL,
-    role          SMALLINT  NOT NULL
+    id            BIGSERIAL PRIMARY KEY,
+    username      VARCHAR(25) UNIQUE NOT NULL,
+    password_hash TEXT               NOT NULL,
+    created_at    TIMESTAMP          NOT NULL DEFAULT now(),
+    role          SMALLINT           NOT NULL
 );
 
-CREATE TABLE transaction_categories
-(
-    id         BIGSERIAL PRIMARY KEY UNIQUE,
-    user_id    BIGINT REFERENCES users (id) NOT NULL,
-    name       VARCHAR(255)                 NOT NULL,
-    type       SMALLINT                     NOT NULL CHECK (type IN (0, 1)) NOT NULL,
-    created_at TIMESTAMP                    NOT NULL,
-    UNIQUE (user_id, name, type)
-);
-
-CREATE TABLE recurring_bills
+CREATE TABLE accounts
 (
     id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    name        TEXT           NOT NULL,
-    category_id BIGINT REFERENCES transaction_categories (id),
-    amount      NUMERIC(14, 2) NOT NULL,
-    day_due     SMALLINT CHECK (day_due BETWEEN 1 AND 31),
-    is_active   BOOLEAN,
-    created_at  TIMESTAMP
+    user_id     BIGINT    NOT NULL,
+    name        TEXT      NOT NULL,
+    type        TEXT      NOT NULL,
+    is_archived BOOLEAN   NOT NULL,
+    order_num   INTEGER   NOT NULL,
+    created_at  TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE bill_instances
+CREATE TABLE categories
 (
-    id                BIGSERIAL PRIMARY KEY,
-    recurring_bill_id BIGINT         NOT NULL REFERENCES recurring_bills (id),
-    year              INT            NOT NULL,
-    month             INT            NOT NULL CHECK (month BETWEEN 1 AND 12),
-    amount_expected   NUMERIC(14, 2) NOT NULL,
-    created_at        TIMESTAMP,
-    UNIQUE (recurring_bill_id, year, month)
+    id         BIGSERIAL PRIMARY KEY,
+    user_id    BIGINT    NOT NULL,
+    name       TEXT      NOT NULL,
+    group_name TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE transactions
 (
-    id               BIGSERIAL PRIMARY KEY UNIQUE,
-    user_id          BIGINT REFERENCES users (id) NOT NULL,
-    category_id      BIGINT REFERENCES transaction_categories (id),
-    bill_instance_id BIGINT REFERENCES bill_instances (id),
-    description      VARCHAR(255)                 NOT NULL,
-    amount           NUMERIC(14, 2)               NOT NULL,
-    date             TIMESTAMP                    NOT NULL,
-    created_at       TIMESTAMP                    NOT NULL
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT         NOT NULL,
+    account_id  BIGINT         NOT NULL,
+    date        DATE           NOT NULL,
+    amount      NUMERIC(14, 2) NOT NULL,
+    category_id BIGINT,
+    note        TEXT                    DEFAULT '',
+    cleared     BOOLEAN        NOT NULL,
+    approved    BOOLEAN        NOT NULL,
+    created_at  TIMESTAMP      NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMP      NOT NULL DEFAULT now()
 );
 
-CREATE TABLE budgets
+CREATE TABLE budget_allocations
 (
     id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    category_id BIGINT         NOT NULL REFERENCES transaction_categories (id),
+    user_id     BIGINT         NOT NULL,
+    month       INT            NOT NULL,
     year        INT            NOT NULL,
-    month       INT            NOT NULL CHECK (month BETWEEN 1 AND 12),
-    budgeted    NUMERIC(14, 2) NOT NULL,
-    created_at  TIMESTAMP,
-    UNIQUE (user_id, category_id, year, month)
+    category_id BIGINT         NOT NULL,
+    assigned    NUMERIC(14, 2) NOT NULL,
+    created_at  TIMESTAMP      NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMP      NOT NULL DEFAULT now()
 );
+
+-- Только самые критичные индексы для производительности
+CREATE INDEX idx_transactions_user_date ON transactions (user_id, date DESC);
+CREATE INDEX idx_transactions_account ON transactions (account_id);
+CREATE INDEX idx_budget_user_month ON budget_allocations (user_id, month);

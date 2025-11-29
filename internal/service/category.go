@@ -26,7 +26,7 @@ func (s *CategoryService) Create(ctx context.Context, logined model.User, req mo
 	category := model.CreateCategoryRecord{
 		UserID:    logined.ID,
 		Name:      req.Name,
-		Type:      req.Type,
+		UpdatedAt: time.Now(),
 		CreatedAt: time.Now(),
 	}
 
@@ -48,7 +48,11 @@ func (s *CategoryService) Update(ctx context.Context, logined model.User, id int
 		return ErrAccessDenied
 	}
 
-	err = s.repo.Update(ctx, id, dto)
+	err = s.repo.Update(ctx, id, model.UpdateCategoryRecord{
+		Name:      dto.Name,
+		GroupName: dto.GroupName,
+		UpdatedAt: time.Now(),
+	})
 	if err != nil {
 		return err
 	}
@@ -74,7 +78,7 @@ func (s *CategoryService) Delete(ctx context.Context, logined model.User, id int
 	return nil
 }
 
-func (s *CategoryService) GetByID(ctx context.Context, logined model.User, id int) (model.TransactionCategory, error) {
+func (s *CategoryService) GetByID(ctx context.Context, logined model.User, id int) (model.Category, error) {
 	category, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return category, ErrCategoryNotFound
@@ -87,17 +91,8 @@ func (s *CategoryService) GetByID(ctx context.Context, logined model.User, id in
 	return category, nil
 }
 
-func (s *CategoryService) GetList(ctx context.Context, logined model.User) ([]model.TransactionCategory, error) {
+func (s *CategoryService) GetList(ctx context.Context, logined model.User) ([]model.Category, error) {
 	categories, err := s.repo.GetList(ctx, logined.ID)
-	if err != nil {
-		return categories, err
-	}
-
-	return categories, nil
-}
-
-func (s *CategoryService) GetListByType(ctx context.Context, logined model.User, categoryType model.CategoryType) ([]model.TransactionCategory, error) {
-	categories, err := s.repo.GetListByType(ctx, logined.ID, categoryType)
 	if err != nil {
 		return categories, err
 	}

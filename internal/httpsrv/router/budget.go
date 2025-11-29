@@ -25,7 +25,7 @@ func (r *BudgetRouter) CreateBudget(c *gin.Context) {
 		return
 	}
 
-	var req model.CreateBudgetRequest
+	var req model.CreateBudgetAllocationRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -54,7 +54,7 @@ func (r *BudgetRouter) UpdateBudget(c *gin.Context) {
 		return
 	}
 
-	var req model.UpdateBudgetRequest
+	var req model.UpdateBudgetAllocationRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -54,7 +54,7 @@ func (s *Server) setup() {
 
 	apiv1 := s.gin.Group("/api/v1")
 	{
-		auth := apiv1.Group("/user")
+		auth := apiv1.Group("/auth")
 		{
 			auth.POST("/register", s.router.User.Register)
 			auth.POST("/login", s.router.User.Login)
@@ -79,27 +79,17 @@ func (s *Server) setup() {
 		{
 			categories.POST("", s.router.Category.CreateCategory)
 			categories.GET("", s.router.Category.GetCategories)
-			categories.GET("/:id", s.router.Category.GetCategory)
 			categories.PUT("/:id", s.router.Category.UpdateCategory)
 			categories.DELETE("/:id", s.router.Category.DeleteCategory)
 		}
 
-		budgets := apiv1.Group("/budgets")
-		budgets.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
+		accounts := apiv1.Group("/accounts")
+		accounts.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
 		{
-			budgets.POST("", s.router.Budget.CreateBudget)
-			budgets.GET("", s.router.Budget.GetBudgets)
-			budgets.GET("/period", s.router.Budget.GetBudgetsByPeriod)
-			budgets.GET("/:id", s.router.Budget.GetBudget)
-			budgets.PUT("/:id", s.router.Budget.UpdateBudget)
-			budgets.DELETE("/:id", s.router.Budget.DeleteBudget)
-		}
-
-		imports := apiv1.Group("/import")
-		imports.Use(middleware.RequireAuth(s.sessionManager, s.repository.UserRepository))
-		{
-			imports.POST("/parse", s.router.Import.ParseExcelFile)
-			imports.POST("/data", s.router.Import.ImportData)
+			accounts.POST("", s.router.Account.CreateAccount)
+			accounts.GET("", s.router.Account.GetAccounts)
+			accounts.PATCH("/:id", s.router.Account.UpdateAccount)
+			accounts.DELETE("/:id", s.router.Account.DeleteAccount)
 		}
 
 		admin := apiv1.Group("/admin")
