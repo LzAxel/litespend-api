@@ -38,7 +38,7 @@ func (r CategoryRepositoryPostgres) Create(ctx context.Context, category model.C
 	return createdID, nil
 }
 
-func (r CategoryRepositoryPostgres) Update(ctx context.Context, id int, dto model.UpdateCategoryRequest) error {
+func (r CategoryRepositoryPostgres) Update(ctx context.Context, id int, dto model.UpdateCategoryRecord) error {
 	query := r.sq.Update("categories").Where(sq.Eq{"id": id})
 
 	if dto.Name != nil {
@@ -48,6 +48,8 @@ func (r CategoryRepositoryPostgres) Update(ctx context.Context, id int, dto mode
 	if dto.GroupName != nil {
 		query = query.Set("group_name", *dto.Name)
 	}
+
+	query = query.Set("updated_at", dto.UpdatedAt)
 
 	sqlQuery, args, err := query.ToSql()
 	if err != nil {

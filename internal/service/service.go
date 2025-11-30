@@ -17,6 +17,13 @@ type Service struct {
 	Import
 }
 
+type Account interface {
+	Create(ctx context.Context, logined model.User, account model.CreateAccountRequest) (uint64, error)
+	Update(ctx context.Context, logined model.User, dto model.UpdateAccountRequest) error
+	GetList(ctx context.Context, logined model.User) ([]model.Account, error)
+	Delete(ctx context.Context, logined model.User, id uint64) error
+}
+
 type User interface {
 	Register(ctx context.Context, user model.RegisterRequest) error
 	Login(ctx context.Context, req model.LoginRequest) (model.User, error)
@@ -41,7 +48,6 @@ type Category interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.Category, error)
 	GetList(ctx context.Context, logined model.User) ([]model.Category, error)
-	GetListByType(ctx context.Context, logined model.User, categoryType model.CategoryType) ([]model.Category, error)
 }
 
 type Budget interface {
@@ -50,7 +56,6 @@ type Budget interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.BudgetAllocation, error)
 	GetList(ctx context.Context, logined model.User) ([]model.BudgetAllocation, error)
-	GetListDetailedByPeriod(ctx context.Context, logined model.User, year uint, month uint) ([]model.BudgetDetailed, error)
 }
 
 type Auth interface {

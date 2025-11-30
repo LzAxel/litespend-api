@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/jmoiron/sqlx"
 	"litespend-api/internal/model"
-	"time"
 )
 
 type UserRepository interface {
@@ -16,15 +15,12 @@ type UserRepository interface {
 }
 
 type TransactionRepository interface {
-	Create(ctx context.Context, transaction model.Transaction) (int, error)
-	Update(ctx context.Context, id int, dto model.UpdateTransactionRequest) error
+	Create(ctx context.Context, transaction model.CreateTransactionRecord) (int, error)
+	Update(ctx context.Context, id int, dto model.UpdateTransactionRecord) error
 	Delete(ctx context.Context, id int) error
 	GetByID(ctx context.Context, id int) (model.Transaction, error)
 	GetList(ctx context.Context, userID uint64) ([]model.Transaction, error)
-	GetListPaginated(ctx context.Context, userID uint64, params model.PaginationParams) ([]model.Transaction, int, error)
-	GetBalanceStatistics(ctx context.Context, userID uint64, year uint, month uint) (model.CurrentBalanceStatistics, error)
-	GetCategoryStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.CategoryStatisticsItem, error)
-	GetPeriodStatistics(ctx context.Context, userID uint64, period model.PeriodType, from, to *time.Time) ([]model.PeriodStatisticsItem, error)
+	GetListPaginated(ctx context.Context, userID uint64, accountID *uint64, params model.PaginationParams) ([]model.Transaction, int, error)
 }
 
 type CategoryRepository interface {
@@ -42,7 +38,14 @@ type BudgetRepository interface {
 	GetByID(ctx context.Context, id int) (model.BudgetAllocation, error)
 	GetList(ctx context.Context, userID uint64) ([]model.BudgetAllocation, error)
 	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetAllocation, error)
-	GetListDetailedByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetDetailed, error)
+}
+
+type AccountRepository interface {
+	Create(ctx context.Context, account model.CreateAccountRecord) (int, error)
+	Update(ctx context.Context, id int, dto model.UpdateAccountRecord) error
+	Delete(ctx context.Context, id int) error
+	GetByID(ctx context.Context, id int) (model.Account, error)
+	GetList(ctx context.Context, userID uint64) ([]model.Account, error)
 }
 
 type Repository struct {
@@ -50,6 +53,7 @@ type Repository struct {
 	TransactionRepository TransactionRepository
 	CategoryRepository    CategoryRepository
 	BudgetRepository      BudgetRepository
+	AccountRepository     AccountRepository
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
@@ -58,5 +62,6 @@ func NewRepository(db *sqlx.DB) *Repository {
 		TransactionRepository: NewTransactionRepositoryPostgres(db),
 		CategoryRepository:    NewCategoryRepositoryPostgres(db),
 		BudgetRepository:      NewBudgetRepositoryPostgres(db),
+		AccountRepository:     NewAccountRepositoryPostgres(db),
 	}
 }

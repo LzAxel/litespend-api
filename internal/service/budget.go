@@ -68,7 +68,3 @@ func (s *BudgetService) GetByID(ctx context.Context, logined model.User, id int)
 func (s *BudgetService) GetList(ctx context.Context, logined model.User) ([]model.BudgetAllocation, error) {
 	return s.repo.GetList(ctx, logined.ID)
 }
-
-func (s *BudgetService) GetListDetailedByPeriod(ctx context.Context, logined model.User, year uint, month uint) ([]model.BudgetDetailed, error) {
-	return s.repo.GetListDetailedByPeriod(ctx, logined.ID, year, month)
-}
