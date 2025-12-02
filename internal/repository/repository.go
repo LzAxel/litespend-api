@@ -41,11 +41,11 @@ type BudgetRepository interface {
 }
 
 type AccountRepository interface {
-	Create(ctx context.Context, account model.CreateAccountRecord) (int, error)
-	Update(ctx context.Context, id int, dto model.UpdateAccountRecord) error
-	Delete(ctx context.Context, id int) error
-	GetByID(ctx context.Context, id int) (model.Account, error)
-	GetList(ctx context.Context, userID uint64) ([]model.Account, error)
+	Create(ctx context.Context, account model.CreateAccountRecord) (uint64, error)
+	Update(ctx context.Context, id uint64, dto model.UpdateAccountRecord) error
+	Delete(ctx context.Context, id uint64) error
+	GetByID(ctx context.Context, id uint64) (model.AccountDB, error)
+	GetList(ctx context.Context, userID uint64) ([]model.AccountDB, error)
 }
 
 type Repository struct {

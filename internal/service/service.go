@@ -15,12 +15,13 @@ type Service struct {
 	Budget
 	Auth
 	Import
+	Account
 }
 
 type Account interface {
 	Create(ctx context.Context, logined model.User, account model.CreateAccountRequest) (uint64, error)
-	Update(ctx context.Context, logined model.User, dto model.UpdateAccountRequest) error
-	GetList(ctx context.Context, logined model.User) ([]model.Account, error)
+	Update(ctx context.Context, logined model.User, id uint64, dto model.UpdateAccountRequest) error
+	GetList(ctx context.Context, logined model.User) ([]model.AccountDB, error)
 	Delete(ctx context.Context, logined model.User, id uint64) error
 }
 
@@ -76,5 +77,6 @@ func NewService(repository *repository.Repository, sessionManager *session.Sessi
 		Budget:      NewBudgetService(repository.BudgetRepository),
 		Auth:        NewAuthService(sessionManager, repository.UserRepository),
 		Import:      NewImportService(repository.TransactionRepository, repository.CategoryRepository, repository.BudgetRepository),
+		Account:     NewAccountService(repository.AccountRepository),
 	}
 }

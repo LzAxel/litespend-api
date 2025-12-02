@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"github.com/shopspring/decimal"
+	"time"
+)
 
 type AccountType string
 
@@ -11,14 +14,26 @@ const (
 )
 
 type Account struct {
-	ID         int64       `json:"id" db:"id"`
-	UserID     int64       `json:"user_id" db:"user_id"`
-	Name       string      `json:"name" db:"name"`
-	Type       AccountType `json:"type" db:"type"`
-	IsArchived bool        `json:"is_archived" db:"is_archived"`
-	OrderNum   int         `json:"order_num" db:"order_num"`
-	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time   `json:"updated_at" db:"updated_at"`
+	ID         uint64          `json:"id"`
+	UserID     uint64          `json:"user_id"`
+	Name       string          `json:"name"`
+	Type       AccountType     `json:"type"`
+	IsArchived bool            `json:"is_archived"`
+	OrderNum   int             `json:"order_num"`
+	Balance    decimal.Decimal `json:"balance"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+}
+
+type AccountDB struct {
+	ID         uint64      `db:"id"`
+	UserID     uint64      `db:"user_id"`
+	Name       string      `db:"name"`
+	Type       AccountType `db:"type"`
+	IsArchived bool        `db:"is_archived"`
+	OrderNum   int         `db:"order_num"`
+	CreatedAt  time.Time   `db:"created_at"`
+	UpdatedAt  time.Time   `db:"updated_at"`
 }
 
 type CreateAccountRequest struct {
@@ -29,7 +44,7 @@ type CreateAccountRequest struct {
 }
 
 type CreateAccountRecord struct {
-	UserID     int64
+	UserID     uint64
 	Name       string
 	Type       AccountType
 	IsArchived bool

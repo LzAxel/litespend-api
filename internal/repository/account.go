@@ -19,8 +19,8 @@ func NewAccountRepositoryPostgres(db *sqlx.DB) AccountRepositoryPostgres {
 	}
 }
 
-func (r AccountRepositoryPostgres) Create(ctx context.Context, account model.CreateAccountRecord) (int, error) {
-	var createdID int
+func (r AccountRepositoryPostgres) Create(ctx context.Context, account model.CreateAccountRecord) (uint64, error) {
+	var createdID uint64
 
 	err := r.db.GetContext(ctx, &createdID, `
 			INSERT INTO accounts (user_id, name, type, is_archived, order_num, created_at, updated_at) 
@@ -36,7 +36,7 @@ func (r AccountRepositoryPostgres) Create(ctx context.Context, account model.Cre
 	return createdID, nil
 }
 
-func (r AccountRepositoryPostgres) Update(ctx context.Context, id int, dto model.UpdateAccountRecord) error {
+func (r AccountRepositoryPostgres) Update(ctx context.Context, id uint64, dto model.UpdateAccountRecord) error {
 	query := r.sq.Update("accounts").Where(sq.Eq{"id": id})
 
 	if dto.Name != nil {
@@ -66,7 +66,7 @@ func (r AccountRepositoryPostgres) Update(ctx context.Context, id int, dto model
 	return nil
 }
 
-func (r AccountRepositoryPostgres) Delete(ctx context.Context, id int) error {
+func (r AccountRepositoryPostgres) Delete(ctx context.Context, id uint64) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM accounts WHERE id = $1`, id)
 	if err != nil {
 		return err
@@ -75,12 +75,13 @@ func (r AccountRepositoryPostgres) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id int) (model.Account, error) {
-	var account model.Account
+func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id uint64) (model.AccountDB, error) {
+	var account model.AccountDB
 
 	err := r.db.GetContext(ctx, &account, `
-		SELECT * FROM accounts 
-		WHERE id = $1`, id)
+		SELECT a.*, SUM(tr.amount) as balance FROM accounts a
+		         LEFT JOIN transactions tr ON a.id = tr.account_id
+		WHERE a.id = $1`, id)
 	if err != nil {
 		return account, err
 	}
@@ -88,13 +89,14 @@ func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id int) (model.A
 	return account, nil
 }
 
-func (r AccountRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.Account, error) {
-	var accounts []model.Account = make([]model.Account, 0)
+func (r AccountRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.AccountDB, error) {
+	var accounts []model.AccountDB = make([]model.AccountDB, 0)
 
 	err := r.db.SelectContext(ctx, &accounts, `
-		SELECT * FROM accounts 
-		WHERE user_id = $1 
-		ORDER BY order_num, name`, userID)
+		SELECT a.*, SUM(tr.amount) as balance FROM accounts a 
+		         LEFT JOIN transactions tr ON a.id = tr.account_id
+		WHERE a.user_id = $1 
+		ORDER BY a.order_num, a.name`, userID)
 	if err != nil {
 		return accounts, err
 	}
