@@ -5,7 +5,6 @@ import (
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
 	"litespend-api/internal/session"
-	"time"
 )
 
 type Service struct {
@@ -21,7 +20,7 @@ type Service struct {
 type Account interface {
 	Create(ctx context.Context, logined model.User, account model.CreateAccountRequest) (uint64, error)
 	Update(ctx context.Context, logined model.User, id uint64, dto model.UpdateAccountRequest) error
-	GetList(ctx context.Context, logined model.User) ([]model.AccountDB, error)
+	GetList(ctx context.Context, logined model.User) ([]model.Account, error)
 	Delete(ctx context.Context, logined model.User, id uint64) error
 }
 
@@ -37,10 +36,7 @@ type Transaction interface {
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.Transaction, error)
 	GetList(ctx context.Context, logined model.User) ([]model.Transaction, error)
-	GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error)
-	GetBalanceStatistics(ctx context.Context, logined model.User, year uint, month uint) (model.CurrentBalanceStatistics, error)
-	GetCategoryStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.CategoryStatisticsResponse, error)
-	GetPeriodStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.PeriodStatisticsResponse, error)
+	GetListPaginated(ctx context.Context, logined model.User, accountID *uint64, params model.PaginationParams) (model.PaginatedTransactionsResponse, error)
 }
 
 type Category interface {
@@ -56,7 +52,7 @@ type Budget interface {
 	Update(ctx context.Context, logined model.User, id int, dto model.UpdateBudgetAllocationRequest) error
 	Delete(ctx context.Context, logined model.User, id int) error
 	GetByID(ctx context.Context, logined model.User, id int) (model.BudgetAllocation, error)
-	GetList(ctx context.Context, logined model.User) ([]model.BudgetAllocation, error)
+	GetList(ctx context.Context, logined model.User, year uint64, month uint64) (model.CategoryBudgetResponse, error)
 }
 
 type Auth interface {
@@ -76,7 +72,6 @@ func NewService(repository *repository.Repository, sessionManager *session.Sessi
 		Category:    NewCategoryService(repository.CategoryRepository),
 		Budget:      NewBudgetService(repository.BudgetRepository),
 		Auth:        NewAuthService(sessionManager, repository.UserRepository),
-		Import:      NewImportService(repository.TransactionRepository, repository.CategoryRepository, repository.BudgetRepository),
 		Account:     NewAccountService(repository.AccountRepository),
 	}
 }

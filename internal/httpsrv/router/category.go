@@ -149,24 +149,6 @@ func (r *CategoryRouter) GetCategories(c *gin.Context) {
 		return
 	}
 
-	typeParam := c.Query("type")
-	if typeParam != "" {
-		typeInt, err := strconv.Atoi(typeParam)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type parameter"})
-			return
-		}
-
-		categories, err := r.service.Category.GetListByType(c.Request.Context(), logined, model.CategoryType(typeInt))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, categories)
-		return
-	}
-
 	categories, err := r.service.Category.GetList(c.Request.Context(), logined)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

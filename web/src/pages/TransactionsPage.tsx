@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { transactionsApi, categoriesApi, type Transaction, type Category, type SortField, type SortOrder } from '@/lib/api';
+import { transactionsApi, categoriesApi, accountsApi, type Transaction, type Category, type Account, type SortField, type SortOrder } from '@/lib/api';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Plus } from 'lucide-react';
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -24,7 +25,7 @@ export function TransactionsPage() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadCategories();
+    loadDictionaries();
   }, []);
 
   useEffect(() => {
@@ -35,12 +36,16 @@ export function TransactionsPage() {
     loadData(1, true);
   }, [sortBy, sortOrder, search]);
 
-  const loadCategories = async () => {
+  const loadDictionaries = async () => {
     try {
-      const response = await categoriesApi.getAll();
-      setCategories(response.data);
+      const [catsRes, accsRes] = await Promise.all([
+        categoriesApi.getAll(),
+        accountsApi.getAll(),
+      ]);
+      setCategories(catsRes.data);
+      setAccounts(accsRes.data.accounts);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('Error loading dictionaries:', error);
     }
   };
 
@@ -248,6 +253,7 @@ export function TransactionsPage() {
           <TransactionForm
             transaction={editingTransaction}
             categories={categories}
+            accounts={accounts}
             onClose={handleFormClose}
             onSuccess={handleFormSuccess}
           />
@@ -257,6 +263,7 @@ export function TransactionsPage() {
       <TransactionList
         transactions={transactions}
         categories={categories}
+        accounts={accounts}
         onEdit={handleEdit}
         onDelete={(id) => setToDelete(transactions.find((t) => t.id === id) || null)}
       />

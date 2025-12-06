@@ -4,7 +4,7 @@ import {authApi} from '@/lib/api';
 import {Button} from '@/components/ui/button';
 import {useEffect, useMemo, useState} from 'react';
 import {Dialog, DialogContent} from '@/components/ui/dialog';
-import {BarChart3, Folder, Menu, Moon, ReceiptText, Sun, Upload, Wallet} from 'lucide-react';
+import {Banknote, BarChart3, Folder, Menu, Moon, ReceiptText, Sun, Upload, Wallet} from 'lucide-react';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -39,6 +39,7 @@ export function Layout({children}: LayoutProps) {
         () => [
             {to: '/transactions', label: 'Транзакции', icon: ReceiptText},
             {to: '/categories', label: 'Категории', icon: Folder},
+            {to: '/accounts', label: 'Счета', icon: Banknote},
             {to: '/budgets', label: 'Бюджеты', icon: Wallet},
             {to: '/import', label: 'Импорт', icon: Upload},
             {to: '/statistics', label: 'Статистика', icon: BarChart3},

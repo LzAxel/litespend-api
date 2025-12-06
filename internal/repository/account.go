@@ -75,13 +75,13 @@ func (r AccountRepositoryPostgres) Delete(ctx context.Context, id uint64) error 
 	return nil
 }
 
-func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id uint64) (model.AccountDB, error) {
-	var account model.AccountDB
+func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id uint64) (model.Account, error) {
+	var account model.Account
 
 	err := r.db.GetContext(ctx, &account, `
-		SELECT a.*, SUM(tr.amount) as balance FROM accounts a
+		SELECT a.*, COALESCE(SUM(tr.amount), 0) as balance FROM accounts a
 		         LEFT JOIN transactions tr ON a.id = tr.account_id
-		WHERE a.id = $1`, id)
+		WHERE a.id = $1 GROUP BY a.id`, id)
 	if err != nil {
 		return account, err
 	}
@@ -89,13 +89,13 @@ func (r AccountRepositoryPostgres) GetByID(ctx context.Context, id uint64) (mode
 	return account, nil
 }
 
-func (r AccountRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.AccountDB, error) {
-	var accounts []model.AccountDB = make([]model.AccountDB, 0)
+func (r AccountRepositoryPostgres) GetList(ctx context.Context, userID uint64) ([]model.Account, error) {
+	var accounts []model.Account = make([]model.Account, 0)
 
 	err := r.db.SelectContext(ctx, &accounts, `
-		SELECT a.*, SUM(tr.amount) as balance FROM accounts a 
+		SELECT a.*, COALESCE(SUM(tr.amount), 0) as balance FROM accounts a 
 		         LEFT JOIN transactions tr ON a.id = tr.account_id
-		WHERE a.user_id = $1 
+		WHERE a.user_id = $1 GROUP BY a.id
 		ORDER BY a.order_num, a.name`, userID)
 	if err != nil {
 		return accounts, err

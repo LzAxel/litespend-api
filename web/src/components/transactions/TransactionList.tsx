@@ -1,12 +1,13 @@
 import {format} from 'date-fns';
 import {ru} from 'date-fns/locale/ru';
-import {type Category, type Transaction} from '@/lib/api';
+import {type Account, type Category, type Transaction} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 
 interface TransactionListProps {
     transactions: Transaction[];
     categories: Category[];
+    accounts: Account[];
     onEdit: (transaction: Transaction) => void;
     onDelete: (id: number) => void;
 }
@@ -14,11 +15,15 @@ interface TransactionListProps {
 export function TransactionList({
                                     transactions,
                                     categories,
+                                    accounts,
                                     onEdit,
                                     onDelete,
                                 }: TransactionListProps) {
     const getCategoryName = (categoryId: number) => {
         return categories.find((c) => c.id === categoryId)?.name || 'Неизвестно';
+    };
+    const getAccountName = (accountId: number) => {
+        return accounts.find((a) => a.id === accountId)?.name || 'Счёт';
     };
 
     if (transactions.length === 0) {
@@ -34,10 +39,12 @@ export function TransactionList({
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium text-[rgb(var(--app-fg))] truncate">
-                                        {transaction.description}
+                                        {transaction.note}
                                     </p>
                                     <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[rgb(var(--muted-foreground))]">
                                         <span className="truncate max-w-[50vw] sm:max-w-none">{getCategoryName(transaction.category_id)}</span>
+                                        <span>•</span>
+                                        <span className="truncate max-w-[50vw] sm:max-w-none">{getAccountName(transaction.account_id)}</span>
                                         <span>•</span>
                                         <span>
                                             {format(new Date(transaction.date), 'dd.MM.yyyy HH:mm', { locale: ru })}

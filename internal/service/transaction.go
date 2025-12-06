@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
+
 	"litespend-api/internal/model"
 	"litespend-api/internal/repository"
-	"time"
 )
 
 var (
@@ -24,14 +25,17 @@ func NewTransactionService(repository repository.TransactionRepository) *Transac
 }
 
 func (s *TransactionService) Create(ctx context.Context, logined model.User, req model.CreateTransactionRequest) (int, error) {
-	transaction := model.Transaction{
-		UserID:         logined.ID,
-		CategoryID:     req.CategoryID,
-		Description:    req.Description,
-		Amount:         req.Amount,
-		Date:           req.Date,
-		BillInstanceID: req.BillInstanceID,
-		CreatedAt:      time.Now(),
+	transaction := model.CreateTransactionRecord{
+		UserID:     logined.ID,
+		CategoryID: req.CategoryID,
+		Amount:     req.Amount,
+		Date:       req.Date,
+		AccountID:  req.AccountID,
+		Note:       req.Note,
+		IsCleared:  req.IsCleared,
+		IsApproved: req.IsApproved,
+		UpdatedAt:  time.Now(),
+		CreatedAt:  time.Now(),
 	}
 
 	id, err := s.repo.Create(ctx, transaction)
@@ -52,7 +56,16 @@ func (s *TransactionService) Update(ctx context.Context, logined model.User, id 
 		return ErrAccessDenied
 	}
 
-	err = s.repo.Update(ctx, id, dto)
+	err = s.repo.Update(ctx, id, model.UpdateTransactionRecord{
+		AccountID:  dto.AccountID,
+		CategoryID: dto.CategoryID,
+		Amount:     dto.Amount,
+		Date:       dto.Date,
+		Note:       dto.Note,
+		IsCleared:  dto.IsCleared,
+		IsApproved: dto.IsApproved,
+		UpdatedAt:  time.Now(),
+	})
 	if err != nil {
 		return err
 	}
@@ -100,54 +113,13 @@ func (s *TransactionService) GetList(ctx context.Context, logined model.User) ([
 	return transactions, nil
 }
 
-func (s *TransactionService) GetListPaginated(ctx context.Context, logined model.User, params model.PaginationParams) (model.PaginatedTransactionsResponse, error) {
+func (s *TransactionService) GetListPaginated(ctx context.Context, logined model.User, accountID *uint64, params model.PaginationParams) (model.PaginatedTransactionsResponse, error) {
 	params.Validate()
 
-	transactions, total, err := s.repo.GetListPaginated(ctx, logined.ID, params)
+	transactions, total, err := s.repo.GetListPaginated(ctx, logined.ID, accountID, params)
 	if err != nil {
 		return model.PaginatedTransactionsResponse{}, err
 	}
 
 	return model.NewPaginatedResponse(transactions, total, params), nil
-}
-
-func (s *TransactionService) GetBalanceStatistics(ctx context.Context, logined model.User, year uint, month uint) (model.CurrentBalanceStatistics, error) {
-	stats, err := s.repo.GetBalanceStatistics(ctx, logined.ID, year, month)
-	if err != nil {
-		return model.CurrentBalanceStatistics{}, err
-	}
-
-	return stats, nil
-}
-
-func (s *TransactionService) GetCategoryStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.CategoryStatisticsResponse, error) {
-	if period == "" {
-		period = model.PeriodTypeDay
-	}
-
-	items, err := s.repo.GetCategoryStatistics(ctx, logined.ID, period, from, to)
-	if err != nil {
-		return model.CategoryStatisticsResponse{}, err
-	}
-
-	return model.CategoryStatisticsResponse{
-		Period: period,
-		Items:  items,
-	}, nil
-}
-
-func (s *TransactionService) GetPeriodStatistics(ctx context.Context, logined model.User, period model.PeriodType, from, to *time.Time) (model.PeriodStatisticsResponse, error) {
-	if period == "" {
-		period = model.PeriodTypeDay
-	}
-
-	items, err := s.repo.GetPeriodStatistics(ctx, logined.ID, period, from, to)
-	if err != nil {
-		return model.PeriodStatisticsResponse{}, err
-	}
-
-	return model.PeriodStatisticsResponse{
-		Period: period,
-		Items:  items,
-	}, nil
 }

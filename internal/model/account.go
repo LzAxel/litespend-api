@@ -14,15 +14,15 @@ const (
 )
 
 type Account struct {
-	ID         uint64          `json:"id"`
-	UserID     uint64          `json:"user_id"`
-	Name       string          `json:"name"`
-	Type       AccountType     `json:"type"`
-	IsArchived bool            `json:"is_archived"`
-	OrderNum   int             `json:"order_num"`
-	Balance    decimal.Decimal `json:"balance"`
-	CreatedAt  time.Time       `json:"created_at"`
-	UpdatedAt  time.Time       `json:"updated_at"`
+	ID         uint64          `json:"id" db:"id"`
+	UserID     uint64          `json:"user_id" db:"user_id"`
+	Name       string          `json:"name" db:"name"`
+	Type       AccountType     `json:"type" db:"type"`
+	IsArchived bool            `json:"is_archived" db:"is_archived"`
+	OrderNum   int             `json:"order_num" db:"order_num"`
+	Balance    decimal.Decimal `json:"balance" db:"balance"`
+	CreatedAt  time.Time       `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at" db:"updated_at"`
 }
 
 type AccountDB struct {

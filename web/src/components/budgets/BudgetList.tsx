@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
-import {type BudgetDetailed, budgetsApi, categoriesApi, type Category} from '@/lib/api';
+import {type BudgetDetailed, budgetsApi, categoriesApi, type Category, type CategoryBudget} from '@/lib/api';
 import {Button} from '@/components/ui/button';
 import {Table, Tbody, Td, Tfoot, Th, Thead, Tr} from '@/components/ui/table';
 import {cn, formatCurrency} from '@/lib/utils';
@@ -16,8 +16,8 @@ interface BudgetListProps {
 }
 
 export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
-    const [budgets, setBudgets] = useState<BudgetDetailed[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [toBeBudgeted, setToBeBudgeted] = useState(0);
+    const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
     const [loading, setLoading] = useState(true);
     const [toDelete, setToDelete] = useState<BudgetDetailed | null>(null);
 
@@ -29,24 +29,17 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
     async function loadData() {
         try {
             setLoading(true);
-            const [budgetsRes, categoriesRes] = await Promise.all([
-                budgetsApi.getByPeriod(year, month),
-                categoriesApi.getAll(),
+            const [budgetsRes] = await Promise.all([
+                budgetsApi.getAll(year, month),
             ]);
-            setBudgets(budgetsRes.data);
-            setCategories(categoriesRes.data);
+            console.log(budgetsRes.data)
+            setBudgets(budgetsRes.data.categories);
         } catch (e) {
             console.error('Failed to load budgets', e);
         } finally {
             setLoading(false);
         }
     }
-
-    const categoryMap = useMemo(() => {
-        const map = new Map<number, string>();
-        categories.forEach((c) => map.set(c.id, c.name));
-        return map;
-    }, [categories]);
 
     const handleDelete = async (id: number) => {
         try {
@@ -61,7 +54,7 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
 
     if (loading) return <div className="text-center py-8">Загрузка...</div>;
 
-    if (budgets.length === 0) return (
+    if (budgets?.length === 0) return (
         <Card>
             <CardContent className="py-10 text-center">
                 <div className="mb-3 text-lg font-medium">Бюджеты не найдены</div>
@@ -77,16 +70,16 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
             {/* Mobile cards */}
             <div className="block md:hidden divide-y divide-[rgb(var(--border))]">
                 {budgets.map((b) => {
-                    const catName = categoryMap.get(b.category_id) || `#${b.category_id}`;
+                    const catName = b.name;
                     const spent = +b.spent;
-                    const budgeted = +b.budgeted;
-                    const remaining = +b.remaining;
+                    const budgeted = +b.assigned;
+                    const remaining = +b.available;
                     const spentPctDisplay = budgeted > 0 ? Math.round((-spent / budgeted) * 100) : 0;
                     const spentPct = Math.max(0, Math.min(100, spentPctDisplay));
                     const remainingPct = Math.max(0, 100 - spentPct);
                     const overPct = spentPctDisplay > 100 ? Math.round(spentPctDisplay - 100) : 0;
                     return (
-                        <div key={b.id} className="p-3">
+                        <div key={b.category_id} className="p-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-row justify-between">
@@ -143,16 +136,16 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
                     </Thead>
                     <Tbody>
                         {budgets.map((b) => {
-                            const catName = categoryMap.get(b.category_id) || `#${b.category_id}`;
+                            const catName = b.name;
                             const spent = +b.spent;
-                            const budgeted = +b.budgeted;
-                            const remaining = +b.remaining;
+                            const budgeted = +b.assigned;
+                            const remaining = +b.available;
                             const spentPctDisplay = budgeted > 0 ? Math.round((-spent / budgeted) * 100) : 0;
                             const spentPct = Math.max(0, Math.min(100, spentPctDisplay));
                             const remainingPct = Math.max(0, 100 - spentPct);
                             const overPct = spentPctDisplay > 100 ? Math.round(spentPctDisplay - 100) : 0;
                             return (
-                                <Tr key={b.id}>
+                                <Tr key={b.category_id}>
                                     <Td className="whitespace-nowrap text-sm text-[rgb(var(--app-fg))]">{catName}</Td>
                                     <Td className="whitespace-nowrap text-sm text-right">{formatCurrency(budgeted)}</Td>
                                     <Td className="whitespace-nowrap text-sm text-right">
@@ -205,9 +198,9 @@ export function BudgetList({year, month, onEdit, onDeleted}: BudgetListProps) {
                         {(() => {
                             const totals = budgets.reduce(
                                 (acc, b) => {
-                                    acc.budgeted += Number(b.budgeted) || 0;
+                                    acc.budgeted += Number(b.assigned) || 0;
                                     acc.spent += Number(b.spent) || 0;
-                                    acc.remaining += Number(b.remaining) || 0;
+                                    acc.remaining += Number(b.available) || 0;
                                     return acc;
                                 },
                                 {budgeted: 0, spent: 0, remaining: 0}

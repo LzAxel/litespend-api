@@ -37,15 +37,15 @@ type BudgetRepository interface {
 	Delete(ctx context.Context, id int) error
 	GetByID(ctx context.Context, id int) (model.BudgetAllocation, error)
 	GetList(ctx context.Context, userID uint64) ([]model.BudgetAllocation, error)
-	GetListByPeriod(ctx context.Context, userID uint64, year uint, month uint) ([]model.BudgetAllocation, error)
+	GetListDetailedByPeriod(ctx context.Context, userID uint64, year uint64, month uint64) (model.CategoryBudgetResponse, error)
 }
 
 type AccountRepository interface {
 	Create(ctx context.Context, account model.CreateAccountRecord) (uint64, error)
 	Update(ctx context.Context, id uint64, dto model.UpdateAccountRecord) error
 	Delete(ctx context.Context, id uint64) error
-	GetByID(ctx context.Context, id uint64) (model.AccountDB, error)
-	GetList(ctx context.Context, userID uint64) ([]model.AccountDB, error)
+	GetByID(ctx context.Context, id uint64) (model.Account, error)
+	GetList(ctx context.Context, userID uint64) ([]model.Account, error)
 }
 
 type Repository struct {

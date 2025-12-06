@@ -1,12 +1,13 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888/api/v1';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8888/api/v1";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -14,54 +15,63 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
-
-export type TransactionType = 0 | 1;
 
 export interface Transaction {
   id: number;
   user_id: number;
   category_id: number;
-  description: string;
+  account_id: number;
+  note: string;
   amount: string;
+  is_cleared: boolean;
+  is_approved: boolean;
   date: string;
+  updated_at: string;
   created_at: string;
 }
 
 export interface CreateTransactionRequest {
+  account_id: number;
   category_id: number;
-  description: string;
+  note: string;
   amount: string;
   date: string;
+  is_cleared: boolean;
+  is_approved: boolean;
 }
 
 export interface UpdateTransactionRequest {
+  account_id: number;
   category_id?: number;
-  description?: string;
+  note?: string;
   amount?: string;
   date?: string;
+  is_cleared?: boolean;
+  is_approved?: boolean;
 }
 
 export interface Category {
   id: number;
   user_id: number;
   name: string;
-  type: TransactionType;
+  group_name: string;
+  updated_at: string;
   created_at: string;
 }
 
 export interface CreateCategoryRequest {
   name: string;
-  type: TransactionType;
+  group_name: string;
 }
 
 export interface UpdateCategoryRequest {
   name?: string;
-  type?: TransactionType;
+  group_name?: string;
 }
 
 export interface User {
@@ -98,7 +108,7 @@ export interface CurrentBalanceStatistics {
   total_expense: string;
 }
 
-export type PeriodType = 'day' | 'week' | 'month';
+export type PeriodType = "day" | "week" | "month";
 
 export interface PeriodStatisticsItem {
   period: string;
@@ -126,46 +136,59 @@ export interface CategoryStatisticsResponse {
 }
 
 export const authApi = {
-  login: (data: LoginRequest) => api.post('/user/login', data),
-  register: (data: RegisterRequest) => api.post('/user/register', data),
-  logout: () => api.post('/user/logout'),
+  login: (data: LoginRequest) => api.post("/auth/login", data),
+  register: (data: RegisterRequest) => api.post("/auth/register", data),
+  logout: () => api.post("/auth/logout"),
 };
 
-export type SortField = 'date' | 'description' | 'category';
-export type SortOrder = 'asc' | 'desc';
+export type SortField = "date" | "description" | "category";
+export type SortOrder = "asc" | "desc";
 
 export const transactionsApi = {
-  getAll: (page = 1, limit = 10, sortBy?: SortField, sortOrder?: SortOrder, search?: string) => {
-    const params: Record<string, string> = { page: String(page), limit: String(limit) };
+  getAll: (
+    page = 1,
+    limit = 10,
+    sortBy?: SortField,
+    sortOrder?: SortOrder,
+    search?: string,
+  ) => {
+    const params: Record<string, string> = {
+      page: String(page),
+      limit: String(limit),
+    };
     if (sortBy) params.sort_by = sortBy;
     if (sortOrder) params.sort_order = sortOrder;
     if (search) params.search = search;
-    return api.get<PaginatedResponse<Transaction>>('/transactions', { params });
+    return api.get<PaginatedResponse<Transaction>>("/transactions", { params });
   },
   getById: (id: number) => api.get<Transaction>(`/transactions/${id}`),
-  create: (data: CreateTransactionRequest) => api.post<{ id: number }>('/transactions', data),
+  create: (data: CreateTransactionRequest) =>
+    api.post<{ id: number }>("/transactions", data),
   update: (id: number, data: UpdateTransactionRequest) =>
     api.put(`/transactions/${id}`, data),
   delete: (id: number) => api.delete(`/transactions/${id}`),
-  getBalanceStatistics: (year: number, month: number) => api.get<CurrentBalanceStatistics>(`/transactions/statistics/balance?year=${year}&month=${month}`),
+  getBalanceStatistics: (year: number, month: number) =>
+    api.get<CurrentBalanceStatistics>(
+      `/transactions/statistics/balance?year=${year}&month=${month}`,
+    ),
   getPeriodStatistics: (period: PeriodType, from?: string, to?: string) =>
-    api.get<PeriodStatisticsResponse>('/transactions/statistics/periods', {
+    api.get<PeriodStatisticsResponse>("/transactions/statistics/periods", {
       params: { period, from, to },
     }),
   getCategoryStatistics: (period: PeriodType, from?: string, to?: string) =>
-    api.get<CategoryStatisticsResponse>('/transactions/statistics/categories', {
+    api.get<CategoryStatisticsResponse>("/transactions/statistics/categories", {
       params: { period, from, to },
     }),
 };
 
 export const categoriesApi = {
-  getAll: () => api.get<Category[]>('/categories'),
+  getAll: () => api.get<Category[]>("/categories"),
   getById: (id: number) => api.get<Category>(`/categories/${id}`),
-  create: (data: CreateCategoryRequest) => api.post<{ id: number }>('/categories', data),
-  update: (id: number, data: UpdateCategoryRequest) => api.put(`/categories/${id}`, data),
+  create: (data: CreateCategoryRequest) =>
+    api.post<{ id: number }>("/categories", data),
+  update: (id: number, data: UpdateCategoryRequest) =>
+    api.put(`/categories/${id}`, data),
   delete: (id: number) => api.delete(`/categories/${id}`),
-  getByType: (type: TransactionType) =>
-    api.get<Category[]>(`/categories?type=${type}`),
 };
 
 export type FrequencyType = 0 | 1 | 2 | 3;
@@ -204,21 +227,29 @@ export interface UpdatePrescribedExpanseRequest {
 }
 
 export const prescribedExpansesApi = {
-  getAll: () => api.get<PrescribedExpanse[]>('/prescribed-expanses'),
+  getAll: () => api.get<PrescribedExpanse[]>("/prescribed-expanses"),
   getAllWithPaymentStatus: () =>
-    api.get<PrescribedExpanseWithPaymentStatus[]>('/prescribed-expanses/with-payment-status'),
-  getById: (id: number) => api.get<PrescribedExpanse>(`/prescribed-expanses/${id}`),
+    api.get<PrescribedExpanseWithPaymentStatus[]>(
+      "/prescribed-expanses/with-payment-status",
+    ),
+  getById: (id: number) =>
+    api.get<PrescribedExpanse>(`/prescribed-expanses/${id}`),
   create: (data: CreatePrescribedExpanseRequest) =>
-    api.post<{ id: number }>('/prescribed-expanses', data),
+    api.post<{ id: number }>("/prescribed-expanses", data),
   update: (id: number, data: UpdatePrescribedExpanseRequest) =>
     api.put(`/prescribed-expanses/${id}`, data),
   delete: (id: number) => api.delete(`/prescribed-expanses/${id}`),
   markAsPaid: (id: number) =>
-    api.post<{ transaction_id: number; message: string }>(`/prescribed-expanses/${id}/mark-as-paid`),
+    api.post<{ transaction_id: number; message: string }>(
+      `/prescribed-expanses/${id}/mark-as-paid`,
+    ),
   markAsPaidPartial: (id: number, amount: string) =>
-    api.post<{ transaction_id: number; message: string }>(`/prescribed-expanses/${id}/mark-as-paid-partial`, {
-      amount,
-    }),
+    api.post<{ transaction_id: number; message: string }>(
+      `/prescribed-expanses/${id}/mark-as-paid-partial`,
+      {
+        amount,
+      },
+    ),
 };
 
 export interface ExcelColumnMapping {
@@ -251,35 +282,34 @@ export interface ImportResult {
 export const importApi = {
   parseFile: (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    return api.post<ExcelFileStructure>('/import/parse', formData, {
+    formData.append("file", file);
+    return api.post<ExcelFileStructure>("/import/parse", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
   importData: (file: File, mapping: ExcelColumnMapping) => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('mapping', JSON.stringify(mapping));
-    return api.post<ImportResult>('/import/data', formData, {
+    formData.append("file", file);
+    formData.append("mapping", JSON.stringify(mapping));
+    return api.post<ImportResult>("/import/data", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
 };
 
 // Budgets
-export interface BudgetDetailed {
+export interface BudgetAllocation {
   id: number;
   user_id: number;
   category_id: number;
   year: number;
   month: number;
-  budgeted: string;
-  spent: string;
-  remaining: string;
+  assigned: string;
+  updated_at: string;
   created_at: string;
 }
 
@@ -287,22 +317,71 @@ export interface CreateBudgetRequest {
   category_id: number;
   year: number;
   month: number;
-  budgeted: string;
+  assigned: string;
 }
 
 export interface UpdateBudgetRequest {
   category_id?: number;
   year?: number;
   month?: number;
-  budgeted?: string;
+  assigned?: string;
+}
+
+export interface CategoryBudget {
+    assigned: number;
+    available: number;
+    carried_over: number;
+    category_id: number;
+    group_name: string;
+    name: string;
+    spent: number;
+}
+
+export interface CategoryBudgetResponse {
+    to_be_budgeted: number;
+    categories: CategoryBudget[];
 }
 
 export const budgetsApi = {
-  create: (data: CreateBudgetRequest) => api.post<{ id: number }>('/budgets', data),
-  update: (id: number, data: UpdateBudgetRequest) => api.put(`/budgets/${id}`, data),
+  create: (data: CreateBudgetRequest) =>
+    api.post<{ id: number }>("/budgets", data),
+  update: (id: number, data: UpdateBudgetRequest) =>
+    api.put(`/budgets/${id}`, data),
   delete: (id: number) => api.delete(`/budgets/${id}`),
-  getById: (id: number) => api.get<BudgetDetailed>(`/budgets/${id}`),
-  getAll: () => api.get<BudgetDetailed[]>('/budgets'),
-  getByPeriod: (year: number, month: number) => api.get<BudgetDetailed[]>(`/budgets/period`, { params: { year, month } }),
+  getById: (id: number) => api.get<BudgetAllocation>(`/budgets/${id}`),
+  getAll: (year: number, month: number) => api.get<CategoryBudgetResponse>(`/budgets/detailed?year=${year}&month=${month}`),
 };
 
+export type AccountType = 'cash' | 'bank' | 'credit'
+
+export interface Account {
+    id: number;
+    user_id: number;
+    name: string;
+    type: AccountType;
+    is_archived: boolean;
+    order_num: number;
+    balance: number;
+    updated_at: string;
+    created_at: string;
+}
+
+export interface CreateAccountRequest {
+    name: string;
+    type: AccountType;
+    is_archived: boolean;
+    order_num: number;
+}
+
+export interface UpdateAccountRequest {
+    name?: string;
+    is_archived?: boolean;
+    order_num?: number;
+}
+
+export const accountsApi = {
+    create: (data: CreateAccountRequest) => api.post<CreateAccountRequest>("/accounts", data),
+    update: (id: number, data: UpdateAccountRequest) => api.patch<UpdateAccountRequest>("/accounts/"+id, data),
+    getAll: () => api.get<{accounts: Account[]}>("/accounts"),
+    delete: (id: number) => api.delete<void>("/accounts/"+id),
+};

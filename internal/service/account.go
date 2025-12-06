@@ -32,10 +32,10 @@ func (s *AccountService) Create(ctx context.Context, logined model.User, account
 	return createdID, nil
 }
 
-func (s *AccountService) GetList(ctx context.Context, logined model.User) ([]model.AccountDB, error) {
+func (s *AccountService) GetList(ctx context.Context, logined model.User) ([]model.Account, error) {
 	accounts, err := s.repo.GetList(ctx, logined.ID)
 	if err != nil {
-		return []model.AccountDB{}, err
+		return []model.Account{}, err
 	}
 
 	return accounts, nil

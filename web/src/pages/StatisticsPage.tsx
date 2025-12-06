@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import {transactionsApi, type PeriodType, type CurrentBalanceStatistics} from '@/lib/api';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
 
 export function StatisticsPage() {
   const [balance, setBalance] = useState<CurrentBalanceStatistics>();

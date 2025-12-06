@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { budgetsApi, categoriesApi, type BudgetDetailed, type CreateBudgetRequest, type UpdateBudgetRequest, type Category } from '@/lib/api';
+import { budgetsApi, categoriesApi, type BudgetAllocation, type CreateBudgetRequest, type UpdateBudgetRequest, type Category } from '@/lib/api';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface BudgetFormProps {
-  budget?: BudgetDetailed | null;
+  budget?: BudgetAllocation | null;
   defaultYear?: number;
   defaultMonth?: number;
   onClose: () => void;
@@ -18,12 +18,12 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
     category_id: number | '';
     year: number | '';
     month: number | '';
-    budgeted: string;
+    assigned: string;
   }>({
     category_id: budget?.category_id ?? '',
     year: budget?.year ?? defaultYear ?? new Date().getFullYear(),
     month: budget?.month ?? defaultMonth ?? new Date().getMonth() + 1,
-    budgeted: budget?.budgeted ?? '',
+    assigned: budget?.assigned ?? '',
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,7 +38,7 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.category_id || !form.year || !form.month || !form.budgeted) return;
+    if (!form.category_id || !form.year || !form.month || !form.assigned) return;
     setSubmitting(true);
     try {
       if (budget) {
@@ -46,7 +46,7 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
           category_id: form.category_id,
           year: form.year,
           month: form.month,
-          budgeted: form.budgeted,
+          assigned: form.assigned,
         };
         await budgetsApi.update(budget.id, dto);
       } else {
@@ -54,7 +54,7 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
           category_id: form.category_id,
           year: form.year,
           month: form.month,
-          budgeted: form.budgeted,
+          assigned: form.assigned,
         };
         await budgetsApi.create(dto);
       }
@@ -89,8 +89,8 @@ export function BudgetForm({ budget, defaultYear, defaultMonth, onClose, onSucce
         <Input type="number" id="month" name="month" value={form.month as number} onChange={handleChange} className="mt-1" min={1} max={12} />
       </div>
       <div>
-        <Label htmlFor="budgeted">Сумма</Label>
-        <Input type="number" step="0.01" id="budgeted" name="budgeted" value={form.budgeted} onChange={handleChange} className="mt-1" />
+        <Label htmlFor="assigned">Сумма</Label>
+        <Input type="number" step="0.01" id="assigned" name="assigned" value={form.assigned} onChange={handleChange} className="mt-1" />
       </div>
       <div className="md:col-span-4 flex flex-col-reverse sm:flex-row gap-2 mt-2">
         <Button type="button" variant="outline" onClick={onClose}>

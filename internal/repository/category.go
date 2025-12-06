@@ -46,7 +46,7 @@ func (r CategoryRepositoryPostgres) Update(ctx context.Context, id int, dto mode
 	}
 
 	if dto.GroupName != nil {
-		query = query.Set("group_name", *dto.Name)
+		query = query.Set("group_name", *dto.GroupName)
 	}
 
 	query = query.Set("updated_at", dto.UpdatedAt)

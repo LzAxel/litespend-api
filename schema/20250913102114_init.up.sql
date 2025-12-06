@@ -59,4 +59,4 @@ CREATE TABLE budget_allocations
 -- Только самые критичные индексы для производительности
 CREATE INDEX idx_transactions_user_date ON transactions (user_id, date DESC);
 CREATE INDEX idx_transactions_account ON transactions (account_id);
-CREATE INDEX idx_budget_user_month ON budget_allocations (user_id, month);
+CREATE INDEX idx_budget_user_month ON budget_allocations (user_id, year, month);

@@ -77,37 +77,6 @@ func (r *BudgetRouter) UpdateBudget(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "budget updated"})
 }
 
-func (r *BudgetRouter) DeleteBudget(c *gin.Context) {
-	logined, ok := middleware.GetUserFromContext(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid budget id"})
-		return
-	}
-
-	err = r.service.Budget.Delete(c.Request.Context(), logined, id)
-	if err != nil {
-		if errors.Is(err, service.ErrBudgetNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		if errors.Is(err, service.ErrAccessDenied) {
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "budget deleted"})
-}
-
 func (r *BudgetRouter) GetBudget(c *gin.Context) {
 	logined, ok := middleware.GetUserFromContext(c)
 	if !ok {
@@ -146,41 +115,19 @@ func (r *BudgetRouter) GetBudgets(c *gin.Context) {
 		return
 	}
 
-	budgets, err := r.service.Budget.GetList(c.Request.Context(), logined)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, budgets)
-}
-
-func (r *BudgetRouter) GetBudgetsByPeriod(c *gin.Context) {
-	logined, ok := middleware.GetUserFromContext(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-
-	yearStr := c.Query("year")
-	monthStr := c.Query("month")
-	if yearStr == "" || monthStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "year and month are required"})
-		return
-	}
-
-	year64, err := strconv.ParseUint(yearStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid year"})
-		return
-	}
-	month64, err := strconv.ParseUint(monthStr, 10, 32)
+	month, err := strconv.ParseUint(c.Query("month"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid month"})
-		return
+		return 
 	}
 
-	budgets, err := r.service.Budget.GetListDetailedByPeriod(c.Request.Context(), logined, uint(year64), uint(month64))
+	year, err := strconv.ParseUint(c.Query("year"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid year"})
+		return 
+	}
+
+	budgets, err := r.service.Budget.GetList(c.Request.Context(), logined,year, month)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
